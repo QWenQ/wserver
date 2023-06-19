@@ -2,28 +2,24 @@
 #define THREAD_H
 
 #include <vector>
+#include <functional>
 #include "Epoll.h"
 
 class Thread {
     public:
+        typedef std::function<void()> ThreadFunc;
+
         Thread();
         ~Thread();
 
-        void loop();
+        bool started() const { return m_started; }
+        void start();
 
-
-        void handleNewConnection(int fd);
-        void handleReadEvent(int fd);
-        void handleWriteEvent(int fd);
-
-        static void* worker(void* arg);
     private:
-        const static int MAX_EVENTS = 1024;
-        const static int TIMEOUT = 5000;
-
-        pthread_t m_tid;
-        bool m_loop;
-        Epoll m_epoll;
+        bool m_started;
+        pthread_t m_ptid;
+        pid_t m_tid;
+        ThreadFunc m_func;
 }; // class Thread
 
 #endif // THREAD_H

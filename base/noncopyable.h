@@ -1,5 +1,5 @@
-#ifndef NONCOPYABLE_H
-#define NONCOPYABLE_H
+#ifndef BASE_NONCOPYABLE_H
+#define BASE_NONCOPYABLE_H
 class noncopyable {
     public:
         noncopyable(const noncopyable& arg) = delete;
@@ -7,5 +7,5 @@ class noncopyable {
     protected:
         noncopyable() = default;
         ~noncopyable() = default;
-}
-#endif // NONCOPYABLE_H
+}; // class noncopyable
+#endif // BASE_NONCOPYABLE_H

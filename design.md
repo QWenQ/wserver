@@ -15,6 +15,8 @@ When a request of connection is comming, the server will get it to the IO thread
 The blocked compute thread gets events from their own epoll and starts to deal with the request of client sockets.
 timer: when 
 
+the main thread assigns the tasks through eventfd to io threads(runInLoop());
+
 
 ## Classes and Data Structures
 ### class HttpRequest
@@ -34,5 +36,9 @@ Task:
 1. get events from epoll
 
 ### class ThreadPool
+
+### class TimerQueue
+Task:
+1. deal with timeout events in a min heap
 
 ## Algorithms
