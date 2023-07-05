@@ -1,3 +1,4 @@
+#include <sys/eventfd.h>
 #include <assert.h>
 #include "EventLoop.h"
 #include "Channel.h"
@@ -11,27 +12,36 @@ __thread EventLoop* t_loopInThisThread = 0;
 
 const int EventLoop::kPollTimeoutMs = 5000;
 
-EventLoop::EventLoop() {
-    // todo
-}
-
-EventLoop::EventLoop(Epoll* epoll)
+EventLoop::EventLoop() 
 :   m_looping(false),
     m_quit(false),
-    m_tid(gettid()),
+    m_calling_pending_functors(false),
+    m_event_handling(false),
+    m_tid(::gettid()),
     m_epoll(new Epoll(this)),
-    m_active_channels()
+    m_active_channels(),
+    m_current_active_channel(nullptr),
+    m_timer_heap(new TimerHeap()),
+    m_wakeup_fd(::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)),
+    m_wakeup_channel(new Channel(this, m_wakeup_fd)),
+    m_mutex(),
+    m_pending_functors()
 {
     if (t_loopInThisThread) {
-        // log: current thread has already owned an EventLoop ojbect
+        perror("EventLoop() construction error!");
     }
     else {
         t_loopInThisThread = this;
     }
+    m_wakeup_channel->setReadHandler(std::bind(&EventLoop::handleRead, this));
+    m_wakeup_channel->enableReading();
 }
 
+
 EventLoop::~EventLoop() {
-    assert(!m_looping);
+    m_wakeup_channel->disableAll();
+    m_wakeup_channel->remove();
+    ::close(m_wakeup_fd);
     t_loopInThisThread = NULL;
 }
 
@@ -41,6 +51,7 @@ EventLoop* EventLoop::getEventLoopOfCurrentThread() {
 
 void EventLoop::abortNotInLoopThread() {
     // todo
+    perror("not in loop thread error!");
 }
 
 
@@ -53,16 +64,13 @@ void EventLoop::loop() {
         m_active_channels.clear();
         m_epoll->poll(kPollTimeoutMs, &m_active_channels);
         // handle I/O events
+        m_event_handling = true;
         for (Channel* it : m_active_channels) {
+            m_current_active_channel = it;
             it->handleEvent();
         }
-
-        // handle timeout events ?? so, what's m_timerfd in class TimerHeap for?
-        std::vector<Timer> timeout_events = m_timer_heap->getExpired();
-        for (auto it : timeout_events) {
-            it.handleTimeoutEvent();
-        }
-
+        m_current_active_channel = NULL;
+        m_event_handling = false;
         doPendingFunctors();
     }
     m_looping = false;
@@ -98,6 +106,16 @@ void EventLoop::queueInLoop(const Functor& cb) {
     if (!isInLoopThread() || m_calling_pending_functors) {
         wakeup();
     }
+}
+
+void EventLoop::removeChannel(Channel* channel) {
+    assert(channel->ownerLoop() == this);
+    assertInLoopThread();
+    if (m_event_handling) {
+        assert(channel == m_current_active_channel
+                || std::find(m_active_channels.begin(), m_active_channels.end(), channel) == m_active_channels.end());
+    }
+    m_epoll->removeChannel(channel);
 }
 
 void EventLoop::doPendingFunctors() {

@@ -12,7 +12,6 @@ const int Epoll::TIMEOUT = 5000;
 const int Epoll::kInitEventListSize = 16;
 
 
-
 Epoll::Epoll(EventLoop* loop)
 :   m_owner_loop(loop),
     m_epollfd(::epoll_create(5)),
@@ -27,7 +26,6 @@ Epoll::Epoll(EventLoop* loop)
 Epoll::~Epoll() { 
     ::close(m_epollfd);
 }
-
 
 void Epoll::poll(int timeoutMs, ChannelList* activeChannels) {
     int nums = ::epoll_wait(m_epollfd, 
@@ -102,6 +100,7 @@ void Epoll::updateChannel(Channel* channel) {
     } 
 }
 
+/*
 void Epoll::removeChannel(Channel* channel) {
     assertInLoopThread();
     int fd = channel->fd();
@@ -117,6 +116,27 @@ void Epoll::removeChannel(Channel* channel) {
     }
     channel->setIndex(kNew);
 }
+*/
+
+void Epoll::removeChannel(Channel* channel) {
+    assertInLoopThread();
+    int fd = channel->fd();
+    if (m_channels.find(fd) != m_channels.end()
+        && m_channels[fd] == channel
+        && channel->isNoneEvent()) {
+        int index = channel->index();
+        if (index == kAdded || index == kDeleted) {
+            size_t n = m_channels.erase(fd);
+            if (n != 1) {
+                perror("std::map::erase() error!");
+            }
+            if (index == kAdded) {
+                update(EPOLL_CTL_DEL, channel);
+            }
+            channel->setIndex(kNew);
+        }
+    }
+}
 
 void Epoll::update(int operation, Channel* channel) {
     int fd = channel->fd();
@@ -124,7 +144,7 @@ void Epoll::update(int operation, Channel* channel) {
     memset(&event, 0, sizeof(event));
     event.data.ptr = channel;
     event.events = channel->events();
-    int ret = epoll_ctl(m_epollfd, operation, fd, &event);
+    int ret = ::epoll_ctl(m_epollfd, operation, fd, &event);
     if (ret == -1) {
         perror("epoll_ctl() error!");
     }

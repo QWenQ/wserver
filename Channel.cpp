@@ -10,13 +10,13 @@ Channel::Channel(EventLoop* loop, int fd)
     m_fd(fd),
     m_events(0),
     m_revents(0),
-    m_index(-1)
-{
-    // todo
-}
+    m_index(kNew)
+{ }
 
 Channel::~Channel() {
     // todo
+    assert(!m_event_handling);
+    remove();
 }
 
 void Channel::update() {
@@ -24,17 +24,21 @@ void Channel::update() {
 }
 
 void Channel::handleEvent() {
+    m_event_handling = true;
+    if (m_revents & EPOLLHUP && !(m_revents & EPOLLIN)) {
+        handleCloseEvent();
+    }
     if (m_revents & EPOLLERR) {
         handleErrorEvent();
     }
     if (m_revents & (EPOLLIN | EPOLLPRI | EPOLLRDHUP)) {
         handleReadEvent();
     }
-    else if (m_revents & EPOLLOUT) {
+    if (m_revents & EPOLLOUT) {
         handleWriteEvent();
     }
+    m_event_handling = false;
 }
-
 
 void Channel::handleReadEvent() {
     if (m_read_handler) {
@@ -60,6 +64,12 @@ void Channel::handleErrorEvent() {
     }
 }
 
+void Channel::handleCloseEvent() {
+    if (m_close_callback) {
+        m_close_callback();
+    }
+}
+
 void Channel::setReadHandler(const Callback& read_handler) {
     m_read_handler = read_handler;
 }
@@ -74,4 +84,38 @@ void Channel::setConnHandler(const Callback& conn_handler) {
 
 void Channel::setErrorHandler(const Callback& error_handler) {
     m_error_handler = error_handler;
+}
+
+void Channel::setCloseHandler(const Callback& close_handler) {
+    m_close_callback = close_handler;
+}
+
+void Channel::enableReading() {
+    m_events |= kReadEvent;
+    update();
+}
+
+void Channel::disableAll() {
+    m_events |= kNoneEvent;
+    update();
+}
+
+void Channel::enableWriting() {
+    m_events |= kWriteEvent;
+    update();
+}
+
+void Channel::disableWriting() {
+    m_events &= ~kNoneEvent;
+    update();
+}
+
+bool Channel::isWriting() {
+    return m_events & kWriteEvent;
+}
+
+void Channel::remove() {
+    m_loop->assertInLoopThread();
+    setIndex(kDeleted);
+    m_loop->removeChannel(this);
 }

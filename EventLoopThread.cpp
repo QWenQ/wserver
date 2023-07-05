@@ -1,23 +1,30 @@
 #include "EventLoopThread.h"
 
-EventLoopThread::EventLoopThread() {
-    // todo
-}
+EventLoopThread::EventLoopThread() 
+:   m_thread(std::bind(&EventLoopThread::threadFunc, this)),
+    m_loop(NULL),
+    m_mutex(),
+    m_cond(m_mutex)
+{ }
 
 EventLoopThread::~EventLoopThread() {
-    // todo
+    if (m_loop != NULL) {
+        m_loop->quit();
+    }
 }
 
 EventLoop* EventLoopThread::startLoop() {
     assert(m_thread.started());
+    // the start() method will call threadFunc() 
+    // which will complete the assignment of m_loop.
     m_thread.start();
     {
         MutexLockGuard lock(m_mutex);
+        // reject spurious wakeup
         while (m_loop == NULL) {
             m_cond.wait();
         }
     }
-
     return m_loop;
 }
 
@@ -30,4 +37,5 @@ void EventLoopThread::threadFunc() {
     }
 
     loop.loop();
+    m_loop = nullptr;
 }

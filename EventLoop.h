@@ -13,6 +13,7 @@
 class Epoll;
 class Channel;
 class Timer;
+class TimerHeap;
 
 class EventLoop : noncopyable {
     public:
@@ -21,7 +22,6 @@ class EventLoop : noncopyable {
         static const int kPollTimeoutMs;
 
         EventLoop();
-        EventLoop(Epoll* epoll);
         ~EventLoop();
 
         void loop();
@@ -33,7 +33,7 @@ class EventLoop : noncopyable {
         }
 
         bool isInLoopThread() {
-            return m_tid == gettid();
+            return m_tid == ::gettid();
         }
 
         static EventLoop* getEventLoopOfCurrentThread();
@@ -53,6 +53,8 @@ class EventLoop : noncopyable {
         // for task assignment to I/O threads
         void runInLoop(const Functor& cb);
         void queueInLoop(const Functor& cb);
+
+        void removeChannel(Channel* channel);
     private:
         void abortNotInLoopThread();
         // read one byte from m_wakeup_fd
@@ -67,10 +69,16 @@ class EventLoop : noncopyable {
         bool m_looping;
         bool m_quit;
         bool m_calling_pending_functors;
+        bool m_event_handling;
         const pid_t m_tid;
         std::unique_ptr<Epoll> m_epoll;
+        
+        // scrach variables
         ChannelList m_active_channels;
+        Channel* m_current_active_channel;
+
         std::unique_ptr<TimerHeap> m_timer_heap;
+        // a fd for event notification in user-space applications
         int m_wakeup_fd;
         // for readable events in m_wakeup_fd
         std::unique_ptr<Channel> m_wakeup_channel;

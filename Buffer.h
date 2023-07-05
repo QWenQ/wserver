@@ -4,16 +4,17 @@
 #include <vector>
 #include <string>
 
-/// +-------------------+------------------+------------------+
-/// |    useless data   |  readable bytes  |  writable bytes  |
-/// |                   |     (CONTENT)    |                  |
-/// +-------------------+------------------+------------------+
-/// |                   |                  |                  |
-/// 0      <=      readerIndex   <=   writerIndex    <=     size
+/// +-------------------+------------------+------------------+-----------+
+/// |    useless data   |  readable bytes  |  writable bytes  |           |
+/// |                   |     (CONTENT)    |                  |           |
+/// +-------------------+------------------+------------------+-----------|
+/// |                   |                  |                  |           |
+/// 0      <=      readerIndex   <=   writerIndex    <=     size   <= capacity
 
 class Buffer {
     public:
         const static std::size_t INITTIAL_SIZE = 1024;
+        Buffer();
         Buffer(int fd);
         ~Buffer();
 
@@ -24,6 +25,15 @@ class Buffer {
 
         std::string getAnHTTPLine();
 
+        ssize_t readFromFd(int fd);
+        ssize_t writeToFd(int fd);
+        int writableBytes() const { return m_buffer.size() - m_write_index; }
+        int preWritableBytes() const { return m_read_index; }
+        int readableBytes() const { return m_write_index - m_read_index; }
+        void append(const char* msg, int len);
+        void ensureEnoughSpace(int len);
+ 
+
         // debug:
         void setContent(const std::string& request);
 
@@ -32,6 +42,12 @@ class Buffer {
         void clearUselessData();
         // reserves double original storage
         void reserve(std::size_t cap);
+
+        // get the begin of the buffer
+        char* begin() { return &(*m_buffer.begin()); }
+        char* writeBegin() { return &(*m_buffer.begin()) + m_write_index; }
+        char* readBegin() { return &(*m_buffer.begin()) + m_read_index; }
+        void makeSpace(int len);
 
 
         int m_fd;

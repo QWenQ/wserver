@@ -2,6 +2,13 @@
 #include <sys/uio.h>
 #include "Buffer.h"
 
+
+Buffer::Buffer()
+:   m_read_index(0),
+    m_write_index(0),
+    m_buffer(INITTIAL_SIZE, 0)
+{ }
+
 Buffer::Buffer(int fd)
     :   m_fd(fd),
         m_read_index(0),
@@ -108,5 +115,72 @@ void Buffer::setContent(const std::string& request) {
     for (std::size_t i = 0; i < request.size(); ++i) {
         m_buffer[m_write_index] = request[i];
         ++m_write_index;
+    }
+}
+
+ssize_t Buffer::readFromFd(int fd) {
+    char extrabuf[65536];
+    struct iovec iovs[2];
+    int writable_bytes = writableBytes();
+    iovs[0].iov_base = begin() + m_write_index;
+    iovs[0].iov_len = writable_bytes;
+    iovs[1].iov_base = extrabuf;
+    iovs[1].iov_len = sizeof(extrabuf);
+    int iovcnt = 2;
+    ssize_t bytes = ::readv(fd, iovs, iovcnt);
+    // if m_buffer has enough space
+    if (writable_bytes >= bytes) {
+        m_write_index += bytes;
+    }
+    else {
+        m_write_index = m_buffer.size();
+        append(extrabuf, bytes - writable_bytes);
+    }
+    return bytes;
+}
+
+ssize_t Buffer::writeToFd(int fd) {
+    ssize_t bytes = ::write(fd, readBegin(), readableBytes());
+    if (bytes < 0) {
+        perror("write() error!");
+    }
+    else {
+        m_read_index += bytes;
+        // retrive
+        if (m_read_index == m_write_index) {
+            m_read_index = 0;
+            m_write_index = 0;
+        }
+    }
+    return bytes;
+}
+
+void Buffer::append(const char* msg, int len) {
+    // make sure the buffer has enought space to append the string 
+    ensureEnoughSpace(len);
+    // append the msg to the end of the buffer
+    std::copy(msg, msg + len, writeBegin());
+    m_write_index += len;
+}
+
+void Buffer::ensureEnoughSpace(int len) {
+    if (writableBytes() < len) {
+        makeSpace(len);
+    }
+}
+
+void Buffer::makeSpace(int len) {
+    if (preWritableBytes() + writableBytes() >= len) {
+        // move msg in the buffer to the head
+        int readable_bytes = readableBytes();
+        std::copy(m_buffer.begin() + m_read_index,
+                    m_buffer.begin() + m_write_index,
+                    m_buffer.begin());
+        m_read_index = 0;
+        m_write_index = readable_bytes;
+    }
+    else {
+        // or allocate more space for the buffer
+        m_buffer.resize(m_write_index + len);
     }
 }

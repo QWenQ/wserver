@@ -11,9 +11,10 @@ class EventLoopThread {
         ~EventLoopThread();
 
         EventLoop* startLoop();
-        void threadFunc();
 
     private:
+        void threadFunc();
+        
         Thread m_thread;
         EventLoop* m_loop; 
         MutexLock m_mutex;

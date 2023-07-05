@@ -5,9 +5,14 @@
 
 #include "EventLoop.h"
 
+const int kNew = -1;
+const int kAdded = 1;
+const int kDeleted = 2;
+
 class Channel {
     public:
         typedef std::function<void()> Callback;
+        typedef std::function<void()> ReadEventCallback;
 
         Channel(EventLoop* loop, int fd);
         ~Channel();
@@ -17,12 +22,22 @@ class Channel {
         void handleWriteEvent();
         void handleConnectionEvent();
         void handleErrorEvent();
+        void handleCloseEvent();
 
 
         void setReadHandler(const Callback& read_handler);
         void setWriteHandler(const Callback& write_handler);
         void setConnHandler(const Callback& conn_handler);
         void setErrorHandler(const Callback& error_handler);
+        void setCloseHandler(const Callback& close_handler);
+
+        void enableReading();
+        void disableAll();
+        void enableWriting();
+        void disableWriting();
+        bool isWriting();
+
+        void remove();
 
 
         void setRevents(uint32_t revents) { m_revents = revents; }
@@ -50,11 +65,13 @@ class Channel {
         // the real I/O events happenning
         uint32_t m_revents;
         int m_index;
+        bool m_event_handling;
 
         Callback m_read_handler;
         Callback m_write_handler;
         Callback m_conn_handler;
         Callback m_error_handler;
+        Callback m_close_callback;
 
 }; // class Channel
 
