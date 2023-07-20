@@ -9,12 +9,12 @@ TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port)
 :   m_acceptor_loop(loop),
     m_name(name),
     m_acceptor_ptr(new Acceptor(m_acceptor_loop, reuse_port)),
-    m_pool_ptr(new EventLoopThreadPool()),
+    m_pool_ptr(new EventLoopThreadPool(m_acceptor_loop)),
     m_started(false),
     m_next_conn_id(1),
     m_connections()
 {
-    m_acceptor_ptr->setNewConnnectionCallback(&std::bind(TcpServer::newConnection, this, std::placeholders::_1));
+    m_acceptor_ptr->setNewConnnectionCallback(std::bind(&TcpServer::newConnection, this, std::placeholders::_1));
 }
 
 TcpServer::~TcpServer() {

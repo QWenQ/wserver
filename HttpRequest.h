@@ -2,6 +2,7 @@
 #define HTTP_REQUEST_H
 
 #include <string>
+#include <memory>
 #include "Buffer.h"
 
 enum METHOD { GET, HEAD };
@@ -21,22 +22,13 @@ enum CONNECTION { CLOSE, KEEP_ALIVE };
 
 class HttpRequest {
     public:
-        HttpRequest(int fd);
+        HttpRequest(Buffer* buffer);
         ~HttpRequest();
 
-
         void start();
-
-        LINE_STATE parseLine();
-        REQUEST_STATE parseHTTPRequeset();
-        REQUEST_STATE parseRequestLine();
-        REQUEST_STATE parseMessageHeader();
-        REQUEST_STATE parseMessageBody();
-
-        void setHTTPResponse(REQUEST_STATE state);
+        // void setHTTPResponse(REQUEST_STATE state);
 
         // debug:
-        Buffer& getBuffer() { return m_input_buffer; }
         METHOD getMethod() const { return m_method; }
         HTTP_VERSION getVersion() const { return m_version; }
         CONNECTION getConnection() const { return m_connection; }
@@ -45,7 +37,13 @@ class HttpRequest {
         CHECK_STATE getParseResult() const { return m_current_state; }
 
     private:
-        int m_fd;
+        LINE_STATE parseLine();
+        REQUEST_STATE parseRequestLine();
+        REQUEST_STATE parseMessageHeader();
+        REQUEST_STATE parseMessageBody();
+        REQUEST_STATE parseHTTPRequeset();
+
+
         METHOD m_method;
         HTTP_VERSION m_version;
         CONNECTION m_connection;
@@ -54,8 +52,7 @@ class HttpRequest {
         std::string m_uri;
         std::string m_new_line;
         // buffer contain http request data
-        Buffer m_input_buffer;
-        Buffer m_output_buffer;
+        Buffer* m_buffer;
 }; // class HttpRequest
 
 #endif // HTTP_REQUEST_H

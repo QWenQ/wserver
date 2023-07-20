@@ -11,7 +11,7 @@ class EventLoopThread;
 
 class EventLoopThreadPool : noncopyable {
     public:
-        EventLoopThreadPool(EventLoop* loop, int thread_nums);
+        EventLoopThreadPool(EventLoop* loop);
         ~EventLoopThreadPool();
         void start();
         void setThreadNums(int nums) { m_thread_nums = nums; }

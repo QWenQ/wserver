@@ -1,37 +1,26 @@
 #include <strings.h>
 #include "HttpRequest.h"
 
-HttpRequest::HttpRequest(int fd) 
-:   m_fd(fd), 
-    m_method(GET), 
+
+HttpRequest::HttpRequest(Buffer* buffer)
+:   m_method(GET), 
     m_version(HTTP_1_0),
     m_connection(CLOSE),
     m_current_state(CHECK_STATE_REQUEST_LINE), 
     m_uri(),
     m_new_line(),
-    m_input_buffer(m_fd),
-    m_output_buffer(m_fd)
-    { }
+    m_buffer(buffer)
+{ }
 
 HttpRequest::~HttpRequest() { }
 
 void HttpRequest::start() {
-    // get the http request
-    m_input_buffer.read();
-    // parse the request
     REQUEST_STATE ret = parseHTTPRequeset();
-    if (ret == NO_REQUEST) {
-        // todo: more reqeust data needed
-    }
-    // set the http response
-    setHTTPResponse(ret);
-    // write response to client(m_fd)
-    m_input_buffer.write();
+    // error handling according return state
 }
 
-
 LINE_STATE HttpRequest::parseLine() {
-    m_new_line = m_input_buffer.getAnHTTPLine();
+    m_new_line = m_buffer->getAnHTTPLine();
     for (std::size_t i = 0; i < m_new_line.size(); ++i) {
         if (m_new_line[i] == '\r' && i + 1 < m_new_line.size()) {
             // a complete http line must be end up with "\r\n"
@@ -167,6 +156,7 @@ REQUEST_STATE HttpRequest::parseMessageBody() {
     return GET_REQUEST;
 }
 
+/*
 void HttpRequest::setHTTPResponse(REQUEST_STATE state) {
     std::string msg;
     if (m_version == HTTP_1_0) {
@@ -202,3 +192,4 @@ void HttpRequest::setHTTPResponse(REQUEST_STATE state) {
     msg += "\r\n";
     m_output_buffer.append(msg);
 }
+*/

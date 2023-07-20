@@ -2,10 +2,12 @@
 #include "EventLoop.h"
 #include "EventLoopThread.h"
 
-EventLoopThreadPool::EventLoopThreadPool(EventLoop* loop, int thread_nums) 
+const int DEFAUTL_THREAD_NUMS = 6;
+
+EventLoopThreadPool::EventLoopThreadPool(EventLoop* loop) 
 :   m_base_loop(loop),
     m_started(false),
-    m_thread_nums(thread_nums),
+    m_thread_nums(DEFAUTL_THREAD_NUMS),
     m_next(0),
     m_threads(),
     m_loops()
