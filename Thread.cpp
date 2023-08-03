@@ -3,8 +3,10 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/types.h>
+
 #include "Thread.h"
 #include "HttpRequest.h"
+#include "base/CurrentThread.h"
 
 struct ThreadData {
     typedef Thread::ThreadFunc ThreadFunc;
@@ -19,7 +21,7 @@ struct ThreadData {
     { }
 
     void runInThread() {
-        *m_tid = ::gettid();
+        *m_tid = CurrentThread::tid();
         m_tid = NULL;
         // for what?
         // for child thread get its tid by calling ::gettid()

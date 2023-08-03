@@ -22,6 +22,8 @@ class Timer {
 
         bool operator<(const Timer& timer) { return m_expire_time < timer.m_expire_time; }
 
+        bool less(const std::unique_ptr<Timer>& timer) { return m_expire_time < timer->getExpireTime(); }
+
     private:
         // absolute time
         time_t m_expire_time;

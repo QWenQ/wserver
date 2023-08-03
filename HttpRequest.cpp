@@ -6,7 +6,8 @@ HttpRequest::HttpRequest(Buffer* buffer)
 :   m_method(GET), 
     m_version(HTTP_1_0),
     m_connection(CLOSE),
-    m_current_state(CHECK_STATE_REQUEST_LINE), 
+    m_request_state(NO_REQUEST),
+    m_check_state(CHECK_STATE_REQUEST_LINE), 
     m_uri(),
     m_new_line(),
     m_buffer(buffer)
@@ -15,8 +16,9 @@ HttpRequest::HttpRequest(Buffer* buffer)
 HttpRequest::~HttpRequest() { }
 
 void HttpRequest::start() {
-    REQUEST_STATE ret = parseHTTPRequeset();
+    parseHTTPRequeset();
     // error handling according return state
+    std::string response_msg = getResponseMessage();
 }
 
 LINE_STATE HttpRequest::parseLine() {
@@ -37,27 +39,26 @@ LINE_STATE HttpRequest::parseLine() {
     return LINE_OPEN; 
 }
 
-REQUEST_STATE HttpRequest::parseHTTPRequeset() {
-    REQUEST_STATE ret;
+void HttpRequest::parseHTTPRequeset() {
     LINE_STATE line_status = parseLine();
     while (line_status == LINE_OK) {
-        if (m_current_state == CHECK_STATE_REQUEST_LINE) {
-            ret = parseRequestLine();
-            if (ret == BAD_REQUEST) {
-                return BAD_REQUEST;
+        if (m_check_state == CHECK_STATE_REQUEST_LINE) {
+            parseRequestLine();
+            if (m_request_state == BAD_REQUEST) {
+                return;
             }
         }
-        else if (m_current_state == CHECK_STATE_HEADER) {
-            ret = parseMessageHeader();
-            if (ret == BAD_REQUEST) {
-                return BAD_REQUEST;
+        else if (m_check_state == CHECK_STATE_HEADER) {
+            parseMessageHeader();
+            if (m_request_state == BAD_REQUEST) {
+                return;
             }
             
         }
-        else if (m_current_state == CHECK_STATE_BODY) {
-            ret = parseMessageBody();
-            if (ret == BAD_REQUEST) {
-                return BAD_REQUEST;
+        else if (m_check_state == CHECK_STATE_BODY) {
+            parseMessageBody();
+            if (m_request_state == BAD_REQUEST) {
+                return;
             }
             break;
         }
@@ -65,15 +66,14 @@ REQUEST_STATE HttpRequest::parseHTTPRequeset() {
     }
 
     if (line_status == LINE_OPEN) {
-        return NO_REQUEST;
+        m_request_state = NO_REQUEST;
     }
     else if (line_status == LINE_BAD){
-        return BAD_REQUEST;
+        m_request_state = BAD_REQUEST;
     }
-    return ret;
 }
 
-REQUEST_STATE HttpRequest::parseRequestLine() {
+void HttpRequest::parseRequestLine() {
     std::size_t start = 0;
     std::size_t end = 0;
     while (m_new_line[end] != ' ' && m_new_line[end] != '\0') {
@@ -89,7 +89,8 @@ REQUEST_STATE HttpRequest::parseRequestLine() {
     }
     else {
         // error
-        return BAD_REQUEST;
+        m_request_state = BAD_REQUEST;
+        return ;
     }
 
     // get URI
@@ -118,19 +119,21 @@ REQUEST_STATE HttpRequest::parseRequestLine() {
         m_version = HTTP_1_1;
     }
     else {
-        return BAD_REQUEST;
+        m_request_state = BAD_REQUEST;
+        return;
     }
 
-    m_current_state = CHECK_STATE_HEADER;
-    return NO_REQUEST;
+    m_check_state = CHECK_STATE_HEADER;
+    m_request_state = NO_REQUEST;
 }
 
-REQUEST_STATE HttpRequest::parseMessageHeader() {
+void HttpRequest::parseMessageHeader() {
     // todo
     // headers end with line "\r\n"
     if (m_new_line == "\r\n") {
-        m_current_state = CHECK_STATE_BODY;
-        return NO_REQUEST;
+        m_check_state = CHECK_STATE_BODY;
+        m_request_state = NO_REQUEST;
+        return;
     }
     if (strncasecmp(m_new_line.data(), "Connection:", 11) == 0) {
         int start = 11;
@@ -141,23 +144,23 @@ REQUEST_STATE HttpRequest::parseMessageHeader() {
             m_connection = KEEP_ALIVE;
         }
         else {
-            return BAD_REQUEST;
+            m_request_state = BAD_REQUEST;
+            return;
         }
     }
     else {
         // todo: other headers
     }
-    return NO_REQUEST;
+    m_request_state = NO_REQUEST;
 }
 
-REQUEST_STATE HttpRequest::parseMessageBody() {
+void HttpRequest::parseMessageBody() {
     // todo
-    m_current_state = CHECK_STATE_END;
-    return GET_REQUEST;
+    m_check_state = CHECK_STATE_END;
+    m_request_state = GET_REQUEST;
 }
 
-/*
-void HttpRequest::setHTTPResponse(REQUEST_STATE state) {
+std::string HttpRequest::getResponseMessage() const {
     std::string msg;
     if (m_version == HTTP_1_0) {
         msg += "Http/1.0 ";
@@ -166,23 +169,24 @@ void HttpRequest::setHTTPResponse(REQUEST_STATE state) {
         msg += "Http/1.1 ";
     }
 
-    if (state == NO_REQUEST) {
+    if (m_request_state == NO_REQUEST) {
+        // todo:
         // need more request data
-        
+        // register read event again 
     }
-    else if (state == GET_REQUEST) {
+    else if (m_request_state == GET_REQUEST) {
         msg += "200 OK\r\n";
     }
-    else if (state == BAD_REQUEST) {
+    else if (m_request_state == BAD_REQUEST) {
         msg += "400 Bad Request\r\n";
     }
-    else if (state == FORBIDDEN_REQUEST) {
+    else if (m_request_state == FORBIDDEN_REQUEST) {
         msg += "403 Forbidden Error\r\n";
     }
-    else if (state == INTERNAL_ERROR) {
+    else if (m_request_state == INTERNAL_ERROR) {
         msg += "500 Internal Server Error\r\n";
     }
-    else if (state == CLOSED_CONNECTION) {
+    else if (m_request_state == CLOSED_CONNECTION) {
         // todo
         msg += "\r\n";
     }
@@ -190,6 +194,5 @@ void HttpRequest::setHTTPResponse(REQUEST_STATE state) {
         // more states
     }
     msg += "\r\n";
-    m_output_buffer.append(msg);
+    return msg;
 }
-*/

@@ -26,29 +26,32 @@ class HttpRequest {
         ~HttpRequest();
 
         void start();
-        // void setHTTPResponse(REQUEST_STATE state);
+        std::string getResponseMessage() const;
+
+        bool isLongConnection() const { return m_connection == KEEP_ALIVE; }
 
         // debug:
         METHOD getMethod() const { return m_method; }
         HTTP_VERSION getVersion() const { return m_version; }
         CONNECTION getConnection() const { return m_connection; }
         std::string getURI() const { return m_uri; }
+        CHECK_STATE getParseResult() const { return m_check_state; }
 
-        CHECK_STATE getParseResult() const { return m_current_state; }
 
     private:
         LINE_STATE parseLine();
-        REQUEST_STATE parseRequestLine();
-        REQUEST_STATE parseMessageHeader();
-        REQUEST_STATE parseMessageBody();
-        REQUEST_STATE parseHTTPRequeset();
+        void parseRequestLine();
+        void parseMessageHeader();
+        void parseMessageBody();
+        void parseHTTPRequeset();
 
 
         METHOD m_method;
         HTTP_VERSION m_version;
         CONNECTION m_connection;
 
-        CHECK_STATE m_current_state;
+        REQUEST_STATE m_request_state;
+        CHECK_STATE m_check_state;
         std::string m_uri;
         std::string m_new_line;
         // buffer contain http request data

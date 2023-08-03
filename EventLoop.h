@@ -9,6 +9,7 @@
 
 #include "base/noncopyable.h"
 #include "base/Mutex.h"
+#include "base/CurrentThread.h"
 
 class Epoll;
 class Channel;
@@ -33,7 +34,7 @@ class EventLoop : noncopyable {
         }
 
         bool isInLoopThread() {
-            return m_tid == ::gettid();
+            return m_tid == CurrentThread::tid(); 
         }
 
         static EventLoop* getEventLoopOfCurrentThread();

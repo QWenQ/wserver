@@ -24,6 +24,16 @@ class Condition : public noncopyable {
             return ret;
         }
 
+        bool waitForSeconds(int seconds) { 
+            timespec abstime;
+            clock_gettime(CLOCK_MONOTONIC, &abstime);
+            const int64_t kNanoSecondsPerSecond = 1000000000;
+            int64_t nano_seconds = seconds * kNanoSecondsPerSecond;
+            abstime.tv_sec += static_cast<time_t>((abstime.tv_nsec + nano_seconds) / kNanoSecondsPerSecond);
+            abstime.tv_nsec = static_cast<long>((abstime.tv_nsec + nano_seconds) % kNanoSecondsPerSecond);
+            return ETIMEDOUT == pthread_cond_timedwait(&m_cond, m_mutex.getMutex(), &abstime);
+        }
+
         int signal() {
             int ret = pthread_cond_signal(&m_cond);
             if (ret != 0) {

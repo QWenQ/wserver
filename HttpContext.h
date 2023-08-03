@@ -11,6 +11,8 @@ class HttpContext {
 
         void start();
     private:
+        void setResponseMessage();
+        std::string m_response_msg;
         HttpRequest m_request;
         HttpResponse m_response;
 }; // class HttpContext

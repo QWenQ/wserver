@@ -17,11 +17,11 @@ EventLoop::EventLoop()
     m_quit(false),
     m_calling_pending_functors(false),
     m_event_handling(false),
-    m_tid(::gettid()),
+    m_tid(CurrentThread::tid()),
     m_epoll(new Epoll(this)),
     m_active_channels(),
     m_current_active_channel(nullptr),
-    m_timer_heap(new TimerHeap()),
+    m_timer_heap(new TimerHeap(this)),
     m_wakeup_fd(::eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK)),
     m_wakeup_channel(new Channel(this, m_wakeup_fd)),
     m_mutex(),
@@ -84,7 +84,7 @@ void EventLoop::updateChannel(Channel* channel) {
 
 
 void EventLoop::runAt(time_t delay, const TimerCallBack& cb) {
-    m_timer_heap->addTimer(Timer(delay, cb));
+    m_timer_heap->addTimer(std::move(cb), delay);
 }
 
 void EventLoop::runInLoop(const Functor& cb) {

@@ -8,6 +8,8 @@ class HttpServer {
     public:
         HttpServer(EventLoop* loop);
         ~HttpServer();
+
+        void start();
     private:
         // report build a new tcp connection
         void onConnection(const TcpConnectionPtr&);

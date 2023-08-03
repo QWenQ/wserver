@@ -9,23 +9,23 @@ class EventLoop;
 
 class TimerHeap {
     public:
-        typedef std::vector<Timer> TimerList;
+        typedef std::vector<std::unique_ptr<Timer>> TimerList;
+        typedef std::function<void()> CallBack;
 
-        TimerHeap();
+        TimerHeap(EventLoop* loop);
         ~TimerHeap() = default;
 
-        void addTimer(Timer timer);
-        const Timer& top() const;
-        void removeTimer();
-        // void tick();
+        void addTimer(CallBack cb, time_t delay);
+        const std::unique_ptr<Timer>& top() const;
+        void pop();
 
-        TimerList getExpired();
+        void handleRead();
         
     private:
         void percolateDown(int index);
         void percolateUp(int index);
 
-        void addTimerInLoop(Timer& timer);
+        void addTimerInLoop(CallBack cb, time_t delay);
 
         EventLoop* m_ownerloop;
         const int m_timerfd;

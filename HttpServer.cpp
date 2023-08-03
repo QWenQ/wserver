@@ -1,4 +1,6 @@
+#include <iostream>
 #include "HttpServer.h"
+#include "HttpRequest.h"
 
 HttpServer::HttpServer(EventLoop* loop)
 :   m_loop(loop),
@@ -14,16 +16,19 @@ HttpServer::~HttpServer() {
     // todo
 }
 
+void HttpServer::start() {
+    m_server.start();
+}
+
 
 void HttpServer::onConnection(const TcpConnectionPtr& conn) {
     // todo
+    std::cout << "A http connnection has been constructed!" << std::endl;
 }
 
 void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf) {
-    // todo
-    // parse http request 
-    // produce a http response
-    // write back http response to the client
-    std::string http_response = "todo";
+    HttpRequest request(buf);
+    request.start();
+    std::string http_response = request.getResponseMessage();
     conn->send(http_response);
 }
