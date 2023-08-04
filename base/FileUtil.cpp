@@ -1,5 +1,11 @@
 #include "FileUtil.h"
+#include <string.h>
 
+__thread char t_errnobuf[512];
+
+const char* strerror_tl(int err) {
+    return strerror_r(err, t_errnobuf, sizeof(t_errnobuf));
+}
 
 AppendFile::AppendFile(std::string filename)
 :   m_fp(::fopen(filename.c_str(), "ae")),

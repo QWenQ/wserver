@@ -2,6 +2,7 @@
 #define LOG_STREAM_H
 
 #include <string.h>
+#include <string>
 
 #include "noncopyable.h"
 

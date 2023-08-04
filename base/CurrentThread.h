@@ -5,9 +5,13 @@
 #include <stdio.h>
 
 namespace CurrentThread {
-extern __thread int t_cached_tid = 0;
+extern __thread int t_cached_tid;
 extern __thread char t_tid_string[32];
-extern __thread int t_tid_string_len = 6;
+extern __thread int t_tid_string_len;
+
+__thread int t_cached_tid = 0;
+__thread char t_tid_string[32] = {0};
+__thread int t_tid_string_len = 6;
 
 void cacheTid() {
     if (t_cached_tid == 0) {

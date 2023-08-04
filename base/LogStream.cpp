@@ -1,5 +1,6 @@
 #include "LogStream.h"
 #include <string>
+#include <algorithm>
 
 
 const char digits[] = "0123456789ABCDEF";
