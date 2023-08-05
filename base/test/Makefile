@@ -1,22 +1,30 @@
-Logging_test : Logging_test.o Logging.o LogStream.o LogFile.o FileUtil.o
-	g++ -o Logging_test \
-		Logging_test.o Logging.o LogStream.o LogFile.o FileUtil.o\
-		-g -Wall -std=c++2a
+OBJECTS = 
+CC = g++
+FLAGS = -g -Wall
 
-Logging_test.o : Logging_test.cpp ../Logging.h ../LogFile.h
-	g++ -c Logging_test.cpp -std=c++2a -g
+all : Logging_test AsyncLog_test
+.PHONY : all
 
-Logging.o : ../Logging.cpp ../Logging.h ../CurrentThread.h
-	g++ -c ../Logging.cpp -std=c++2a -g
+vpath %.cpp /home/daydayup/wserver : /home/daydayup/wserver/base
+vpath %.h /home/daydayup/wserver : /home/daydayup/wserver/base
 
-LogStream.o : ../LogStream.cpp ../LogStream.h
-	g++ -c ../LogStream.cpp -std=c++2a -g
 
-LogFile.o : ../LogFile.cpp ../LogFile.h ../FileUtil.h
-	g++ -c ../LogFile.cpp -std=c++2a -g
+# todo
+Logging_test : ...
+	...
 
-FileUtil.o : ../FileUtil.cpp ../FileUtil.h
-	g++ -c ../FileUtil.cpp -std=c++2a -g
+#todo
+AsyncLog_test : ...
+	...
 
-clean:
-	rm -rf Logging_test *.o
+#todo ??? other predependecies ??? answer: -MM
+all : $(OBJECTS)
+
+$(OBJECTS) : %.o : %.cpp
+	$(CC) -c $(FLAGS) $< -o $@ -MM
+
+
+.PHONY : clean
+
+clean : 
+	-rm -rf *.o %_testk

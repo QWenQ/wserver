@@ -13,7 +13,7 @@ void dummyOutput(const char* msg, size_t len) {
     if (g_file) {
         ::fwrite(msg, 1, len, g_file);
     }
-    else {
+    else if (g_log_file) {
         g_log_file->append(msg, len);
     }
 }
@@ -22,7 +22,6 @@ void dummyOutput(const char* msg, size_t len) {
 void bench(const char* type) {
     Logger::setOutputFunc(dummyOutput);
     g_total = 0;
-    std::cout << std::fixed << std::setprecision(9) << std::left;
     // record start time
     auto start = std::chrono::high_resolution_clock::now();
     // log 
@@ -36,9 +35,12 @@ void bench(const char* type) {
     // print 
     std::chrono::duration<double> lapsed = end - start;
     std::cout << "type: " << type 
-                << "\nlapsed time: " << lapsed.count() 
-                << "\nmsg rate: " << items / lapsed.count() 
-                << "\nbyte rate: " << g_total / lapsed.count() / (1024 * 1024)
+                << std::fixed << std::left
+                << std::setprecision(6)
+                << "\nlapsed time: " << lapsed.count() << " seconds"
+                << std::setprecision(2)
+                << "\nmsg rate: " << items / lapsed.count() << "msg/s" 
+                << "\nbyte rate: " << g_total / lapsed.count() / (1024 * 1024) << "MiB/s"
                 << std::endl << std::endl;
 }
 
@@ -61,6 +63,10 @@ int main() {
 
     // TODO:
     // bench for class LogFile
+    g_file = NULL;
+    // roll size 50
+    g_log_file.reset(new LogFile("test_log_st", 50 * 1000 * 1000));
+    bench("test_log_st");
 
     return 0;
 }
