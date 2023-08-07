@@ -12,7 +12,7 @@
 
 class AsyncLog : noncopyable {
     public:
-        AsyncLog(const std::string& basename, int flush_interval);
+        AsyncLog(const std::string& basename, off_t roll_size, int flush_interval = 3);
         ~AsyncLog();
 
         void start() {
@@ -28,7 +28,7 @@ class AsyncLog : noncopyable {
         }
 
         // called by the front end
-        void append(char* msg, size_t len);
+        void append(const char* msg, size_t len);
     private:
         // used by the back end
         void threadFunc();
@@ -39,9 +39,10 @@ class AsyncLog : noncopyable {
         typedef BufferVector::value_type BufferPtr;
 
         bool m_running;
-        const int m_interval_sec;
+        const int m_flush_interval;
         Thread m_thread;
         const std::string m_basename;
+        const off_t m_roll_size;
         CountDownLatch m_latch;
         MutexLock m_mutex;
         Condition m_cond;

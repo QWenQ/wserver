@@ -43,7 +43,8 @@ int main(int argc, char* argv[]) {
     }
     printf("pid: %d\n", getpid());
     char filename[256] = {'\0'};
-    strncpy(filename, argv[0], sizeof(argv[0]));
+    // strncpy(filename, argv[0], sizeof(argv[0]));
+    strncpy(filename, argv[0], strlen(argv[0]));
     AsyncLog asylog(::basename(filename), kRollSize);
     g_async_log = &asylog;
     asylog.start();

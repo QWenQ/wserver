@@ -45,6 +45,8 @@ class FixedBuffer {
 
         char* current() const { return m_buf + m_cur_index; }
 
+        void reset() { m_cur_index = 0; }
+
 
     private:
         char* m_buf;

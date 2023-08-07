@@ -1,5 +1,6 @@
 #include "Logging.h"
 #include "CurrentThread.h"
+#include "timeUtils.h"
 
 #include <chrono>
 #include <sstream>
@@ -20,6 +21,7 @@ Logger::Impl::Impl(Logger::LogLevel level, const std::string& filename, int line
 { 
     formatTime();
     // collect thread ID in Linux OS and log level
+    // CurrentThread::cacheTid();
     m_stream << CurrentThread::tidString() << " " << log_level_name[m_level] << " ";
 }
 
@@ -28,19 +30,9 @@ void Logger::Impl::finish() {
 }
 
 void Logger::Impl::formatTime() {
-    using namespace std::chrono;
-    using clock = high_resolution_clock;
+    std::string time_stamp = timeStamp();
     
-    const auto current_time_point {clock::now()};
-    const auto current_time {clock::to_time_t (current_time_point)};
-    const auto current_localtime {*std::localtime (&current_time)};
-    const auto current_time_since_epoch {current_time_point.time_since_epoch()};
-    const auto current_milliseconds {duration_cast<milliseconds> (current_time_since_epoch).count() % 1000};
-    
-    std::ostringstream stream;
-    stream << std::put_time (&current_localtime, "%F %T") << ":" << std::setw (3) << std::setfill ('0') << current_milliseconds;
-    
-    m_stream << stream.str() << " ";
+    m_stream << time_stamp << " ";
 }
 
 Logger::Logger(const std::string& basename, int line, Logger::LogLevel level) 

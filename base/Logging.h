@@ -18,9 +18,7 @@ class Logger {
     public:
         enum LogLevel { INFO, WARN, ERROR };
 
-        // todo
         Logger(const std::string& basename, int line, LogLevel level);
-        Logger(const std::string& basename, int line, LogLevel level, const char* func);
         ~Logger();
 
         static LogLevel logLevel();

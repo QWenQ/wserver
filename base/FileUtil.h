@@ -9,12 +9,14 @@
 
 class AppendFile : noncopyable {
     public:
-        AppendFile(std::string filename);
+        explicit AppendFile(std::string filename);
         ~AppendFile();
 
         void append(const char* msg, size_t len);
 
         void flush();
+
+        off_t writtenBytes() const { return m_writed_bytes; }
     private:
         size_t write(const char* msg, size_t len);
 

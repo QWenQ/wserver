@@ -1,14 +1,17 @@
 #include "AsyncLog.h"
 #include "LogFile.h"
+#include "timeUtils.h"
 
 #include <chrono>
-#include <format>
+#include <iomanip>
+#include <ctime>
 
-AsyncLog::AsyncLog(const std::string& basename, int flush_interval) 
+AsyncLog::AsyncLog(const std::string& basename, off_t roll_size, int flush_interval) 
 :   m_running(false),
-    m_interval_sec(flush_interval),
+    m_flush_interval(flush_interval),
     m_thread(std::bind(&AsyncLog::threadFunc, this)),
     m_basename(basename),
+    m_roll_size(roll_size),
     m_latch(1),
     m_mutex(),
     m_cond(m_mutex),
@@ -23,7 +26,7 @@ AsyncLog::~AsyncLog() {
     }
 }
 
-void AsyncLog::append(char* msg, size_t len) {
+void AsyncLog::append(const char* msg, size_t len) {
     MutexLockGuard lock(m_mutex);
     if (m_cur_buffer->available() >= len) {
         m_cur_buffer->append(msg, len);
@@ -42,9 +45,10 @@ void AsyncLog::append(char* msg, size_t len) {
     }
 }
 
+
 void AsyncLog::threadFunc() {
     m_latch.countDown();
-    LogFile output(m_basename);
+    LogFile output(m_basename, m_roll_size);
     BufferPtr new_buffer_1(new Buffer());
     BufferPtr new_buffer_2(new Buffer());
     BufferVector write_to_file;
@@ -54,7 +58,7 @@ void AsyncLog::threadFunc() {
             MutexLockGuard lock(m_mutex);
             if (m_buffers.empty()) {
                 // todo: wait a specified time or until signaled
-                m_cond.waitForSeconds(m_interval_sec);
+                m_cond.waitForSeconds(m_flush_interval);
             }
             m_buffers.push_back(std::move(m_cur_buffer));
             m_cur_buffer.swap(new_buffer_1);
@@ -66,18 +70,16 @@ void AsyncLog::threadFunc() {
 
         // if buffers are full of trash
         if (write_to_file.size() > 20) {
-            char buf[256] = {0};
-
-            auto timestamp = std::chrono::high_resolution_clock::now();
+            char buf[256] = { '\0' };
             snprintf(buf, sizeof(buf), "Dropped log message at %s, %zd larger buffers\n",
-                    std::format("{:%Y %m %d %H %M %S}", timestamp),
+                    timeStamp().c_str(),
                     write_to_file.size() - 2);
             fputs(buf, stderr);
             output.append(buf, static_cast<int>(strlen(buf)));
             write_to_file.erase(write_to_file.begin() + 2, write_to_file.end()); 
         }
 
-        // write buffers to logfile object
+        // write data in all buffers to logfile object
         for (const auto& buffer : write_to_file) {
             output.append(buffer->data(), buffer->length());
         }
@@ -90,13 +92,13 @@ void AsyncLog::threadFunc() {
         if (!new_buffer_1) {
             new_buffer_1.swap(write_to_file.back());
             write_to_file.pop_back();
-            new_buffer_1.reset();
+            new_buffer_1->reset();
         }
 
         if (!new_buffer_2) {
             new_buffer_2.swap(write_to_file.back());
             write_to_file.pop_back();
-            new_buffer_2.reset();
+            new_buffer_2->reset();
         }
 
         write_to_file.clear();

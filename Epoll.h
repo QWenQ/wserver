@@ -4,9 +4,9 @@
 #include <vector>
 #include <map>
 #include "base/noncopyable.h"
+#include "EventLoop.h"
 
 class Channel;
-class EventLoop;
 
 const int kNew = -1;
 const int kAdded = 1;

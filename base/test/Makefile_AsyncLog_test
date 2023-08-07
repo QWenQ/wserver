@@ -1,38 +1,47 @@
 OBJECTS = AsyncLog_test.o AsyncLog.o Logging.o LogStream.o \
 			LogFile.o FileUtil.o CurrentThread.o timeUtils.o \
 			Thread.o CountDownLatch.o
+CC = g++
+FLAGSCPP = -g -std=c++2a -Wall
 
 vpath %.cpp /home/daydayup/wserver : /home/daydayup/wserver/base
 vpath %.h /home/daydayup/wserver : /home/daydayup/wserver/base
 
-AsyncLog_test : $(OBJECTS) \ 
-	g++ -o AsyncLog_test $(OBJECTS) -g -Wall -std=c++2a
 
-AsyncLog_test.o : AsyncLog_test.cpp ../AsyncLog.h ../Logging.h
-	g++ -c AsyncLog_test.cpp -std=c++2a -g
 
-AsyncLog.o : ../AsyncLog.cpp ../AsyncLog.h ../LogFile.h ../timeUtils.h
-	g++ -c ../AsyncLog.cpp -std=c++2a -g 
+AsyncLog_test : $(OBJECTS) 
+	$(CC) -o AsyncLog_test $(OBJECTS) -g -Wall -std=c++2a
 
-Logging.o : ../Logging.cpp ../Logging.h ../CurrentThread.h ../timeUtils.h
-	g++ -c ../Logging.cpp -std=c++2a -g
+#all : $(OBJECTS)
 
-LogStream.o : ../LogStream.cpp ../LogStream.h
-	g++ -c ../LogStream.cpp -std=c++2a -g
+#$(OBJECTS) : %.o : %.cpp
+#	$(CC) -c $(FLAGSCPP) $< -o $@
 
-LogFile.o : ../LogFile.cpp ../LogFile.h ../FileUtil.h
-	g++ -c ../LogFile.cpp -std=c++2a -g
+AsyncLog_test.o : ../AsyncLog.h ../Logging.h
+	$(CC) -c AsyncLog_test.cpp $(FLAGSCPP)
 
-FileUtil.o : ../FileUtil.cpp ../FileUtil.h
-	g++ -c ../FileUtil.cpp -std=c++2a -g
+AsyncLog.o : ../AsyncLog.h ../LogFile.h ../timeUtils.h
+	$(CC) -c ../AsyncLog.cpp $(FLAGSCPP) 
 
-CurrentThread.o : ../CurrentThread.cpp ../CurrentThread.h
-	g++ -c ../CurrentThread.cpp -std=c++2a -g
+Logging.o : ../Logging.h ../CurrentThread.h ../timeUtils.h
+	$(CC) -c ../Logging.cpp $(FLAGSCPP)
 
-timeUtils.o : ../timeUtils.cpp ../timeUtils.h
-	g++ -c ../timeUtils.cpp -std=c++2a -g
+LogStream.o : ../LogStream.h
+	$(CC) -c ../LogStream.cpp $(FLAGSCPP)
+
+LogFile.o : ../LogFile.h ../FileUtil.h
+	$(CC) -c ../LogFile.cpp $(FLAGSCPP)
+
+FileUtil.o : ../FileUtil.h
+	$(CC) -c ../FileUtil.cpp $(FLAGSCPP)
+
+CurrentThread.o : ../CurrentThread.h
+	$(CC) -c ../CurrentThread.cpp $(FLAGSCPP)
+
+timeUtils.o : ../timeUtils.h
+	$(CC) -c ../timeUtils.cpp $(FLAGSCPP)
 
 
 .PHONY : clean
 clean :
-	-rm -rf AsyncLog_test $(OBJECTS)
+	-rm -rf AsyncLog_test *.o
