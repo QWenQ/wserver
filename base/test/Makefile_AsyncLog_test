@@ -10,7 +10,7 @@ vpath %.h /home/daydayup/wserver : /home/daydayup/wserver/base
 
 
 AsyncLog_test : $(OBJECTS) 
-	$(CC) -o AsyncLog_test $(OBJECTS) -g -Wall -std=c++2a
+	$(CC) -o AsyncLog_test $(OBJECTS) $(FLAGSCPP)
 
 #all : $(OBJECTS)
 

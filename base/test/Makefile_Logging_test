@@ -1,22 +1,34 @@
-Logging_test : Logging_test.o Logging.o LogStream.o LogFile.o FileUtil.o
-	g++ -o Logging_test \
-		Logging_test.o Logging.o LogStream.o LogFile.o FileUtil.o\
-		-g -Wall -std=c++2a
+TARGET = Logging_test
+OBJECTS = Logging_test.o Logging.o LogStream.o LogFile.o FileUtil.o timeUtils.o CurrentThread.o
+CC = g++
+FLAGSCPP = -g -Wall -std=c++2a
 
-Logging_test.o : Logging_test.cpp ../Logging.h ../LogFile.h
-	g++ -c Logging_test.cpp -std=c++2a -g
+vpath %.cpp /home/daydayup/wserver : /home/daydayup/wserver/base
+vpath %.h /home/daydayup/wserver : /home/daydayup/wserver/base
 
-Logging.o : ../Logging.cpp ../Logging.h ../CurrentThread.h
-	g++ -c ../Logging.cpp -std=c++2a -g
+$(TARGET) : $(OBJECTS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(FLAGSCPP)
 
-LogStream.o : ../LogStream.cpp ../LogStream.h
-	g++ -c ../LogStream.cpp -std=c++2a -g
+Logging_test.o : ../Logging.h ../LogFile.h
+	$(CC) -c Logging_test.cpp $(FLAGSCPP)
 
-LogFile.o : ../LogFile.cpp ../LogFile.h ../FileUtil.h
-	g++ -c ../LogFile.cpp -std=c++2a -g
+Logging.o : ../Logging.h ../CurrentThread.h
+	$(CC) -c ../Logging.cpp $(FLAGSCPP)
 
-FileUtil.o : ../FileUtil.cpp ../FileUtil.h
-	g++ -c ../FileUtil.cpp -std=c++2a -g
+LogStream.o : ../LogStream.h
+	$(CC) -c ../LogStream.cpp $(FLAGSCPP)
+
+LogFile.o : ../LogFile.h ../FileUtil.h
+	$(CC) -c ../LogFile.cpp $(FLAGSCPP)
+
+FileUtil.o : ../FileUtil.h
+	$(CC) -c ../FileUtil.cpp $(FLAGSCPP)
+
+timeUtils.o : ../timeUtils.h
+	$(CC) -c ../timeUtils.cpp $(FLAGSCPP)
+
+CurrentThread.o : ../CurrentThread.h
+	$(CC) -c ../CurrentThread.cpp $(FLAGSCPP)
 
 clean:
-	rm -rf Logging_test *.o
+	-rm -rf Logging_test *.o
