@@ -21,14 +21,13 @@ void bench(bool long_log) {
     std::string long_str(3000, 'X');
     long_str += " ";
     for (int i = 0; i < 30; ++i) {
-        const auto start = std::chrono::high_resolution_clock::now();
+        const auto start = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         for (int j = 0; j < kBatch; ++j) {
             LOG_INFO << "hello, world" << (long_log ? long_str : empty) << cnt;
             ++cnt;
         }
-        const auto end = std::chrono::high_resolution_clock::now();
-        const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-        std::cout << "lapsed time: " << duration.count() << " ns\n";
+        const auto end = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+        std::cout << "lapsed time: " << (end - start) << "ms\n";
         sleep(1);
     }
 }

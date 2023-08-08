@@ -25,8 +25,8 @@ void bench(const char* type) {
     // record start time
     auto start = std::chrono::high_resolution_clock::now();
     // log 
-    // int items = 1000 * 1000;
-    int items = 1000;
+    int items = 1000 * 1000;
+    // int items = 1000;
     for (int i = 0; i < items; ++i) {
         LOG_INFO << "Hello, world" << " 0123456789" << i;
     }
