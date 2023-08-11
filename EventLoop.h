@@ -49,7 +49,7 @@ class EventLoop : noncopyable {
         }
 
         // used for timeout events
-        void runAt(time_t delay, const TimerCallBack& cb);
+        void runAfter(time_t delay, const TimerCallBack& cb);
 
         // for task assignment to I/O threads
         void runInLoop(const Functor& cb);

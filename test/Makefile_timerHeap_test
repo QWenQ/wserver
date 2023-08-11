@@ -1,0 +1,54 @@
+TARGET = TimerHeap_test
+OBJECTS = TimerHeap_test.o TimerHeap.o EventLoop.o EventLoopThread.o timeUtils.o Channel.o \
+            CurrentThread.o Epoll.o Thread.o CountDownLatch.o
+CC = g++
+FLAGSCPP = -g -Wall -std=c++2a
+
+
+vpath %.cpp /home/daydayup/wserber : /home/daydayup/wserber/base
+vpath %.h /home/daydayup/wserber : /home/daydayup/wserber/base
+
+
+$(TARGET) : $(OBJECTS)
+	$(CC) -o $(TARGET) $(OBJECTS) $(FLAGSCPP)
+
+
+
+TimerHeap_test.o : ../EventLoop.h ../EventLoopThread.h ../TimerHeap.h ../base/timeUtils.h
+	$(CC) -c TimerHeap_test.cpp $(FLAGSCPP)
+
+TimerHeap.o : ../TimerHeap.h ../EventLoop.h ../Channel.h ../base/noncopyable.h ../base/Mutex.h ../base/CurrentThread.h \
+			../Timer.h
+	$(CC) -c ../TimerHeap.cpp $(FLAGSCPP)
+
+EventLoop.o : ../EventLoop.h ../base/noncopyable.h ../base/Mutex.h ../base/CurrentThread.h ../Channel.h ../Epoll.h \
+			../Timer.h ../TimerHeap.h
+	$(CC) -c ../EventLoop.cpp $(FLAGSCPP)
+
+EventLoopThread.o : ../EventLoopThread.h ../EventLoop.h ../base/noncopyable.h ../base/Mutex.h ../base/CurrentThread.h \
+			../Thread.h ../Epoll.h ../base/CountDownLatch.h ../base/Condition.h
+	$(CC) -c ../EventLoopThread.cpp $(FLAGSCPP)
+
+timeUtils.o : ../base/timeUtils.h
+	$(CC) -c ../base/timeUtils.cpp $(FLAGSCPP)
+
+Channel.o : ../Channel.h ../EventLoop.h ../base/noncopyable.h ../base/Mutex.h ../base/CurrentThread.h
+	$(CC) -c ../Channel.cpp $(FLAGSCPP)
+
+CurrentThread.o : ../base/CurrentThread.h 
+	$(CC) -c ../base/CurrentThread.cpp $(FLAGSCPP)
+
+Epoll.o : ../Epoll.h ../base/noncopyable.h ../EventLoop.h ../base/Mutex.h ../base/CurrentThread.h ../Channel.h
+	$(CC) -c ../Epoll.cpp $(FLAGSCPP)
+
+Thread.o : ../Thread.h ../Epoll.h ../base/noncopyable.h ../EventLoop.h ../base/Mutex.h ../base/CurrentThread.h \
+		../base/CountDownLatch.h ../base/Condition.h
+	$(CC) -c ../Thread.cpp $(FLAGSCPP)
+
+CountDownLatch.o : ../base/CountDownLatch.h ../base/noncopyable.h ../base/Condition.h ../base/Mutex.h 
+	$(CC) -c ../base/CountDownLatch.cpp $(FLAGSCPP)
+
+
+.PHONE : clean
+clean : 
+	-rm -rf $(TARGET) $(OBJECTS)

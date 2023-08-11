@@ -14,7 +14,7 @@ EventLoopThread::~EventLoopThread() {
 }
 
 EventLoop* EventLoopThread::startLoop() {
-    assert(m_thread.started());
+    assert(m_thread.started() == false);
     // the start() method will call threadFunc() 
     // which will complete the assignment of m_loop.
     m_thread.start();

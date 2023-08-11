@@ -47,7 +47,7 @@ class Channel {
 
         void setIndex(int index) { m_index = index; }
 
-        bool isNoneEvent() const { return m_events == kNoneEvent; }
+        bool isNoneEvent() const { return m_events == static_cast<uint32_t>(kNoneEvent); }
 
         EventLoop* ownerLoop() const { return m_loop; }
 

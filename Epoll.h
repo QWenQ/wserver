@@ -8,10 +8,6 @@
 
 class Channel;
 
-const int kNew = -1;
-const int kAdded = 1;
-const int kDeleted = 2;
-
 class Epoll : noncopyable {
     public:
         typedef std::vector<Channel*> ChannelList;

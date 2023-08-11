@@ -10,7 +10,7 @@ Channel::Channel(EventLoop* loop, int fd)
     m_fd(fd),
     m_events(0),
     m_revents(0),
-    m_index(kNew)
+    m_index(-1)
 { }
 
 Channel::~Channel() {

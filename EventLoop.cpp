@@ -83,7 +83,7 @@ void EventLoop::updateChannel(Channel* channel) {
 }
 
 
-void EventLoop::runAt(time_t delay, const TimerCallBack& cb) {
+void EventLoop::runAfter(time_t delay, const TimerCallBack& cb) {
     m_timer_heap->addTimer(std::move(cb), delay);
 }
 

@@ -5,7 +5,7 @@
 #include <sys/types.h>
 
 #include "Thread.h"
-#include "HttpRequest.h"
+// #include "HttpRequest.h"
 #include "base/CurrentThread.h"
 
 struct ThreadData {

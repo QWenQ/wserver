@@ -5,9 +5,10 @@
 #include <functional>
 #include "Epoll.h"
 #include "base/CountDownLatch.h"
+#include "base/noncopyable.h"
 
 
-class Thread {
+class Thread : noncopyable {
     public:
         typedef std::function<void()> ThreadFunc;
 

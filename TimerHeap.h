@@ -13,15 +13,15 @@ class TimerHeap {
         typedef std::function<void()> CallBack;
 
         TimerHeap(EventLoop* loop);
-        ~TimerHeap() = default;
+        ~TimerHeap();
 
         void addTimer(CallBack cb, time_t delay);
-        const std::unique_ptr<Timer>& top() const;
-        void pop();
 
         void handleRead();
         
     private:
+        const std::unique_ptr<Timer>& top() const;
+        void pop();
         void percolateDown(int index);
         void percolateUp(int index);
 
