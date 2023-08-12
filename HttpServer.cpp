@@ -1,6 +1,6 @@
 #include <iostream>
 #include "HttpServer.h"
-#include "HttpRequest.h"
+#include "HttpContext.h"
 
 HttpServer::HttpServer(EventLoop* loop)
 :   m_loop(loop),
@@ -12,9 +12,7 @@ HttpServer::HttpServer(EventLoop* loop)
         std::bind(&HttpServer::onMessage, this, std::placeholders::_1, std::placeholders::_2));
 }
 
-HttpServer::~HttpServer() {
-    // todo
-}
+HttpServer::~HttpServer() = default;
 
 void HttpServer::start() {
     m_server.start();
@@ -22,13 +20,13 @@ void HttpServer::start() {
 
 
 void HttpServer::onConnection(const TcpConnectionPtr& conn) {
-    // todo
+    // todo: log the connnection 
     std::cout << "A http connnection has been constructed!" << std::endl;
 }
 
 void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf) {
-    HttpRequest request(buf);
-    request.start();
-    std::string http_response = request.getResponseMessage();
+    HttpContext context(buf);
+    context.handleHttpRequest();
+    std::string http_response = context.getHttpResponseMessage();
     conn->send(http_response);
 }

@@ -39,11 +39,11 @@ void TcpServer::newConnection(int fd) {
     conn->setMessageCallback(m_message_callback);
     conn->sestCloseCallback(
         std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
-    io_loop->runInLoop(std::bind(TcpConnection::connectEstablished, conn));
+    io_loop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn.get()));
 }
 
 void TcpServer::removeConnection(const TcpConnectionPtr& connection) {
-    m_acceptor_loop->runInLoop(std::bind(TcpServer::removeConnectionInLoop, this, connection));
+    m_acceptor_loop->runInLoop(std::bind(&TcpServer::removeConnectionInLoop, this, connection));
 }
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& connection) {
@@ -56,5 +56,5 @@ void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& connection) {
 void TcpServer::start() {
     m_started = true;
     m_pool_ptr->start();
-    m_acceptor_loop->runInLoop(std::bind(&Acceptor::listen, m_acceptor_ptr)); 
+    m_acceptor_loop->runInLoop(std::bind(&Acceptor::listen, m_acceptor_ptr.get())); 
 }

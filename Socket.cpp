@@ -45,6 +45,9 @@ void Socket::bind() {
 
 void Socket::listen() {
     int ret = ::listen(m_sockfd, 5);
+    if (ret != 0) {
+        // todo: log error
+    }
 }
 
 int Socket::accept() {

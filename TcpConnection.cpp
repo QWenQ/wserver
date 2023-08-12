@@ -102,7 +102,7 @@ void TcpConnection::sendInLoop(const std::string& message) {
     }
 
     // if not all data has been transferred by the write(), save it to the output buffer
-    if (bytes < message.size()) {
+    if (static_cast<std::string::size_type>(bytes) < message.size()) {
         m_output_buffer.append(message.substr(bytes));
         // register EPOLLOUT event to send the rest data
         if (!m_channel->isWriting()) {

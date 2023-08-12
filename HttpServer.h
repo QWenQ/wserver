@@ -1,5 +1,5 @@
-#ifndef HTTPSERVER_H
-#define HTTPSERVER_H
+#ifndef HTTP_SERVER_H
+#define HTTP_SERVER_H
 
 #include "TcpServer.h"
 #include "TcpConnection.h"

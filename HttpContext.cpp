@@ -14,10 +14,10 @@ HttpContext::HttpContext(Buffer* buffer)
 
 HttpContext::~HttpContext() { }
 
-void HttpContext::start() {
+void HttpContext::handleHttpRequest() {
     parseHTTPRequeset();
     // error handling according return state
-    std::string response_msg = getResponseMessage();
+    std::string response_msg = getHttpResponseMessage();
 }
 
 LINE_STATE HttpContext::parseLine() {
@@ -159,7 +159,7 @@ void HttpContext::parseMessageBody() {
     m_request_state = GET_REQUEST;
 }
 
-std::string HttpContext::getResponseMessage() const {
+std::string HttpContext::getHttpResponseMessage() const {
     std::string msg;
     if (m_version == HTTP_1_0) {
         msg += "Http/1.0 ";

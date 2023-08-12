@@ -1,5 +1,5 @@
-#ifndef HTTP_REQUEST_H
-#define HTTP_REQUEST_H
+#ifndef HTTP_CONTEXT_H
+#define HTTP_CONTEXT_H
 
 #include <string>
 #include <memory>
@@ -25,8 +25,8 @@ class HttpContext {
         HttpContext(Buffer* buffer);
         ~HttpContext();
 
-        void start();
-        std::string getResponseMessage() const;
+        void handleHttpRequest();
+        std::string getHttpResponseMessage() const;
 
         bool isLongConnection() const { return m_connection == KEEP_ALIVE; }
 
@@ -58,4 +58,4 @@ class HttpContext {
         Buffer* m_buffer;
 }; // class HttpContext
 
-#endif // HTTP_REQUEST_H
+#endif // HTTP_CONTEXT_H

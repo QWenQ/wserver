@@ -1,8 +1,9 @@
+#include "TimerHeap.h"
+#include "Timer.h"
+
 #include <sys/timerfd.h>
 #include <strings.h>
 
-#include "TimerHeap.h"
-#include "Timer.h"
 
 // read data from timer fd
 void readTimerFd(const int timer_fd) {
@@ -75,11 +76,10 @@ void TimerHeap::addTimer(TimerHeap::CallBack cb, time_t delay) {
 }
 
 void TimerHeap::addTimerInLoop(TimerHeap::CallBack cb, time_t delay) {
-    // std::unique_ptr<Timer> timer(new Timer(delay, std::move(cb)));
+    std::unique_ptr<Timer> timer(new Timer(delay, std::move(cb)));
     // set a timer for this time out event
     setTimer(m_timerfd, delay); 
-    //m_min_heap.push_back(std::move(timer));
-    m_min_heap.emplace_back(delay, std::move(cb));
+    m_min_heap.push_back(std::move(timer));
     percolateUp(m_min_heap.size() - 1);
 }
 
