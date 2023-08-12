@@ -75,10 +75,11 @@ void TimerHeap::addTimer(TimerHeap::CallBack cb, time_t delay) {
 }
 
 void TimerHeap::addTimerInLoop(TimerHeap::CallBack cb, time_t delay) {
-    std::unique_ptr<Timer> timer(new Timer(delay, std::move(cb)));
+    // std::unique_ptr<Timer> timer(new Timer(delay, std::move(cb)));
     // set a timer for this time out event
     setTimer(m_timerfd, delay); 
-    m_min_heap.push_back(std::move(timer));
+    //m_min_heap.push_back(std::move(timer));
+    m_min_heap.emplace_back(delay, std::move(cb));
     percolateUp(m_min_heap.size() - 1);
 }
 
