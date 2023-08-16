@@ -32,6 +32,7 @@ class Buffer {
         int readableBytes() const { return m_write_index - m_read_index; }
         void append(const char* msg, int len);
         void ensureEnoughSpace(int len);
+        void retrieveAll();
  
 
         // debug:

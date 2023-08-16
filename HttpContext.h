@@ -22,13 +22,29 @@ enum CONNECTION { CLOSE, KEEP_ALIVE };
 
 class HttpContext {
     public:
+        enum HttpStatusCode {
+            kUnKnown,
+            k200OK = 200,
+            k301MovedPermanently = 301,
+            k400BadRequest = 400,
+            k404NotFound = 404
+        };
+
+
         HttpContext(Buffer* buffer);
         ~HttpContext();
 
         void handleHttpRequest();
-        std::string getHttpResponseMessage() const;
+        void getHttpResponseMessage(std::string& msg);
 
         bool isLongConnection() const { return m_connection == KEEP_ALIVE; }
+
+
+        void setStatusCode(HttpStatusCode code) { m_status_code = code; }
+        void setStatusMessage(const std::string& msg) { m_status_message = msg; }
+        void setCloseConnection(bool close) { m_close_connection = close; }
+
+        
 
         // debug:
         METHOD getMethod() const { return m_method; }
@@ -43,12 +59,15 @@ class HttpContext {
         void parseRequestLine();
         void parseMessageHeader();
         void parseMessageBody();
-        void parseHTTPRequeset();
 
 
+        bool m_close_connection;
         METHOD m_method;
         HTTP_VERSION m_version;
         CONNECTION m_connection;
+
+        HttpStatusCode m_status_code;
+        std::string m_status_message;
 
         REQUEST_STATE m_request_state;
         CHECK_STATE m_check_state;

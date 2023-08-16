@@ -3,8 +3,7 @@
 #include "HttpContext.h"
 
 HttpServer::HttpServer(EventLoop* loop)
-:   m_loop(loop),
-    m_server(loop, "Http Server", true)
+:   m_server(loop, "Http Server", true)
 { 
     m_server.setConnectionCallback(
         std::bind(&HttpServer::onConnection, this, std::placeholders::_1));
@@ -27,6 +26,7 @@ void HttpServer::onConnection(const TcpConnectionPtr& conn) {
 void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf) {
     HttpContext context(buf);
     context.handleHttpRequest();
-    std::string http_response = context.getHttpResponseMessage();
+    std::string http_response;
+    context.getHttpResponseMessage(http_response);
     conn->send(http_response);
 }

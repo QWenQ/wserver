@@ -35,6 +35,8 @@ class TcpServer : noncopyable {
 
         void setThreadNums(int nums);
 
+        
+
     private:
         void newConnection(int fd);
         void removeConnection(const TcpConnectionPtr& connection);

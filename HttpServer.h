@@ -3,9 +3,14 @@
 
 #include "TcpServer.h"
 #include "TcpConnection.h"
+#include "base/noncopyable.h"
 
-class HttpServer {
+class HttpContext;
+
+class HttpServer : noncopyable {
     public:
+        typedef std::function<void(HttpContext* context)> HttpCallback;
+
         HttpServer(EventLoop* loop);
         ~HttpServer();
 
@@ -16,7 +21,7 @@ class HttpServer {
         // handle the data saved in the buffer and write a response back to client
         void onMessage(const TcpConnectionPtr&, Buffer*);
 
-        EventLoop* m_loop;
         TcpServer m_server;
+
 }; // class HttpServer
 #endif // HTTPSERVER_H

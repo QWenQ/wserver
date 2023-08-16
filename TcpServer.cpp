@@ -4,12 +4,23 @@
 #include "EventLoop.h"
 #include "TcpConnection.h"
 #include "EventLoopThreadPool.h"
+#include "base/Logging.h"
+
+void defaultConnectionCallback(const TcpConnectionPtr& conn) {
+    // LOG_INFO << "Server: " << conn->getName() << " build a new connection./n";
+}
+
+void defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buf) {
+    buf->retrieveAll();
+}
 
 TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port) 
 :   m_acceptor_loop(loop),
     m_name(name),
     m_acceptor_ptr(new Acceptor(m_acceptor_loop, reuse_port)),
     m_pool_ptr(new EventLoopThreadPool(m_acceptor_loop)),
+    m_conn_callback(defaultConnectionCallback),
+    m_message_callback(defaultMessageCallback),
     m_started(false),
     m_next_conn_id(1),
     m_connections()

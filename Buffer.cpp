@@ -184,3 +184,8 @@ void Buffer::makeSpace(int len) {
         m_buffer.resize(m_write_index + len);
     }
 }
+
+void Buffer::retrieveAll() {
+    m_read_index = 0;
+    m_write_index = 0;
+}
