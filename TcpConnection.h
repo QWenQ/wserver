@@ -29,7 +29,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
 
 
         // internal use only for class TcpServer
-        void sestCloseCallback(const CloseCallback& cb) { m_close_callback = cb; }
+        void setCloseCallback(const CloseCallback& cb) { m_close_callback = cb; }
 
         void setConnectionCallback(const ConnectionCallback& cb) { m_conn_callback = cb; }
         void setMessageCallback(const MessageCallback& cb) { m_message_callback = cb; }
@@ -48,6 +48,8 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         void setTcpKeepAlive(bool on);
 
         EventLoop* getLoop() const { return m_loop; }
+        
+        std::string stateToString() const;
 
 
     private:

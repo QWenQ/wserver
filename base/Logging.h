@@ -12,11 +12,19 @@ date + time + nanosecond + threadID + log level + msg + "-" + filename + line
 Logger::Impl:   date + time + nanosecond + threadID + log level
 Logger::        msg
 Logger::Impl:   "-" + filename + ":" + line
-
 */
+
+/*
+log level:
+INFO: An event happened, the event is purely informative and can be ignored during normal operations.
+WARN: Unexpected behavior happened inside the progress, but it continues to work and the key business features are operating as expected.
+ERROR: One or more functionalities are not working, preventing some functionalities from working correctly.
+FATAL: One or more key business functionalities are not working and the whole system doesn't fulfill the business functionalities.
+*/
+
 class Logger {
     public:
-        enum LogLevel { INFO, WARN, ERROR };
+        enum LogLevel { INFO, WARN, ERROR, FATAL };
 
         Logger(const std::string& basename, int line, LogLevel level);
         ~Logger();
@@ -58,7 +66,9 @@ inline Logger::LogLevel Logger::logLevel() {
 
 #define LOG_INFO if (Logger::logLevel() <= Logger::INFO) \
     Logger(__FILE__, __LINE__, Logger::LogLevel::INFO).stream()
-#define LOG_WARN Logger(__FILE__, __LINE__, Logger::LogLevel::WARN).stream()
+#define LOG_WARN if (Logger::logLevel() <= Logger::WARN) \
+    Logger(__FILE__, __LINE__, Logger::LogLevel::WARN).stream()
 #define LOG_ERROR Logger(__FILE__, __LINE__, Logger::LogLevel::ERROR).stream()
+#define LOG_FATAL Logger(__FILE__, __LINE__, Logger::LogLevel::FATAL).stream()
 
 #endif // LOGGING_H

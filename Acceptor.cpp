@@ -1,4 +1,5 @@
 #include "Acceptor.h"
+#include "base/Logging.h"
 
 Acceptor::Acceptor(EventLoop* loop, bool reuse_port) 
 :   m_loop(loop),
@@ -9,7 +10,6 @@ Acceptor::Acceptor(EventLoop* loop, bool reuse_port)
 {
     m_socket.setReuseAddr(true);
     m_socket.setReusePort(reuse_port);
-    m_socket.bind();
     m_accept_channel.setReadHandler(std::bind(&Acceptor::handleRead, this));
 }
 
@@ -39,5 +39,7 @@ void Acceptor::handleRead() {
             ::close(connfd);
         }
     }
+    else {
+        LOG_ERROR << "in Acceptor::handleRead";
+    }
 }
-

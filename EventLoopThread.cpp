@@ -1,4 +1,5 @@
 #include "EventLoopThread.h"
+#include "base/Logging.h"
 
 EventLoopThread::EventLoopThread() 
 :   m_thread(std::bind(&EventLoopThread::threadFunc, this)),
@@ -14,7 +15,9 @@ EventLoopThread::~EventLoopThread() {
 }
 
 EventLoop* EventLoopThread::startLoop() {
-    assert(m_thread.started() == false);
+    if (m_thread.started()) {
+        LOG_FATAL << "EventLoopThread::startLoop() error!";
+    }
     // the start() method will call threadFunc() 
     // which will complete the assignment of m_loop.
     m_thread.start();

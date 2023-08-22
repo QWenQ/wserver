@@ -5,6 +5,7 @@
 #include "Epoll.h"
 #include "Timer.h"
 #include "TimerHeap.h"
+#include "base/Logging.h"
 
 // the thread variable is an independent entity for each thread
 // and the variables of thread do not interfere with each other.
@@ -27,8 +28,15 @@ EventLoop::EventLoop()
     m_mutex(),
     m_pending_functors()
 {
+    if (m_wakeup_fd < 0) {
+        LOG_FATAL << "Failed in eventfd";
+    }
+
+    LOG_INFO << "EventLoop created " << this << " in thread " << m_tid;
+
     if (t_loopInThisThread) {
-        perror("EventLoop() construction error!");
+        LOG_FATAL << "Another EventLoop " << t_loopInThisThread
+                    << " exists in this thread " << m_tid;
     }
     else {
         t_loopInThisThread = this;
@@ -39,6 +47,8 @@ EventLoop::EventLoop()
 
 
 EventLoop::~EventLoop() {
+    LOG_INFO << "EventLoop " << this << " of thread " << m_tid
+                << " destructs in thread " << CurrentThread::tid();
     m_wakeup_channel->disableAll();
     m_wakeup_channel->remove();
     ::close(m_wakeup_fd);
@@ -50,13 +60,16 @@ EventLoop* EventLoop::getEventLoopOfCurrentThread() {
 }
 
 void EventLoop::abortNotInLoopThread() {
-    // todo
-    perror("not in loop thread error!");
+    LOG_FATAL << "EventLoop::abortNotInLoopThread - EventLoop " << this
+                << " was created in thread " << m_tid 
+                << ", current thread id is " << CurrentThread::tid();
 }
 
 
 void EventLoop::loop() {
-    assert(!m_looping);
+    if (m_looping) {
+        LOG_ERROR << "EventLoop::loop() error!";
+    }
     assertInLoopThread();
     m_looping = true;
     m_quit = false;
@@ -77,7 +90,9 @@ void EventLoop::loop() {
 }
 
 void EventLoop::updateChannel(Channel* channel) {
-    assert(channel->ownerLoop() == this);
+    if (channel->ownerLoop() != this) {
+        LOG_FATAL << "EventLoop::updateChannel() error!";
+    }
     assertInLoopThread();
     m_epoll->updateChannel(channel);
 }
@@ -104,16 +119,22 @@ void EventLoop::queueInLoop(const Functor& cb) {
         m_pending_functors.push_back(cb);
     }
     if (!isInLoopThread() || m_calling_pending_functors) {
+        // debug info
+        // LOG_INFO << "wake up in EventLoop::queueInLoop() in EventLoop " << this;
         wakeup();
     }
 }
 
 void EventLoop::removeChannel(Channel* channel) {
-    assert(channel->ownerLoop() == this);
+    if (channel->ownerLoop() != this) {
+        LOG_FATAL << "EventLoop::removeChannel() error!";
+    }
     assertInLoopThread();
     if (m_event_handling) {
-        assert(channel == m_current_active_channel
-                || std::find(m_active_channels.begin(), m_active_channels.end(), channel) == m_active_channels.end());
+        if (channel != m_current_active_channel
+        || std::find(m_active_channels.begin(), m_active_channels.end(), channel) != m_active_channels.end()) {
+            LOG_FATAL << "EventLoop::removeChannel() error!";
+        }
     }
     m_epoll->removeChannel(channel);
 }
@@ -136,8 +157,7 @@ void EventLoop::wakeup() {
     uint64_t one = 1;
     ssize_t n = ::write(m_wakeup_fd, &one, sizeof(one));
     if (n != sizeof(one)) {
-        // error handling
-        perror("wake up failed!");
+        LOG_ERROR << "EventLoop::wakeup() writes" << n << " bytes instead of " << sizeof(one);
     }
 }
 
@@ -145,7 +165,6 @@ void EventLoop::handleRead() {
     uint64_t one = 1;
     ssize_t n = ::read(m_wakeup_fd, &one, sizeof(one));
     if (n != sizeof(one)) {
-        // error handling
-        perror("handle read for wake up failed!");
+        LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of " << sizeof(one);
     }
 }

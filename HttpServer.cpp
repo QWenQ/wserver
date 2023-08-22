@@ -1,6 +1,7 @@
 #include <iostream>
 #include "HttpServer.h"
 #include "HttpContext.h"
+#include "base/Logging.h"
 
 HttpServer::HttpServer(EventLoop* loop)
 :   m_server(loop, "Http Server", true)
@@ -14,13 +15,12 @@ HttpServer::HttpServer(EventLoop* loop)
 HttpServer::~HttpServer() = default;
 
 void HttpServer::start() {
+    LOG_INFO << "HttpServer[" << m_server.getName() << "] starts.";
     m_server.start();
 }
 
-
 void HttpServer::onConnection(const TcpConnectionPtr& conn) {
-    // todo: log the connnection 
-    std::cout << "A http connnection has been constructed!" << std::endl;
+    // do nothing
 }
 
 void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf) {

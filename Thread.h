@@ -13,6 +13,7 @@ class Thread : noncopyable {
         typedef std::function<void()> ThreadFunc;
 
         Thread(ThreadFunc func);
+        pid_t getTid() const { return m_tid; }
         ~Thread();
 
         bool started() const { return m_started; }

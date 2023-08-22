@@ -1,5 +1,6 @@
 #include "TimerHeap.h"
 #include "Timer.h"
+#include "base/Logging.h"
 
 #include <sys/timerfd.h>
 #include <strings.h>
@@ -10,8 +11,7 @@ void readTimerFd(const int timer_fd) {
     uint64_t one = 1;
     ssize_t ret = ::read(timer_fd, &one, sizeof(one));
     if (ret != sizeof(one)) {
-        // error
-        perror("readTimerFd: ");
+        LOG_ERROR << "TimerHeap::handleRead() reads " << ret << "bytes instead of 8";
     }
 }
 
@@ -21,7 +21,7 @@ void setTimer(const int timer_fd, const time_t delay) {
     value.it_value.tv_sec = delay;
     int ret = timerfd_settime(timer_fd, 0, &value, NULL);
     if (ret != 0) {
-        perror("TimerHeap.cpp::setTimer(): ");
+        LOG_ERROR << "TimerHeap::setTimer";
     }
 }
 
@@ -31,6 +31,9 @@ TimerHeap::TimerHeap(EventLoop* loop)
     m_timer_channel(loop, m_timerfd),
     m_min_heap()
 {
+    if (m_timerfd < 0) {
+        LOG_FATAL << "timerfd_create() failed!";
+    }
     m_timer_channel.setReadHandler(std::bind(&TimerHeap::handleRead, this));
     m_timer_channel.enableReading();
 }

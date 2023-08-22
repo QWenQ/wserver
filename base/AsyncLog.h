@@ -9,6 +9,7 @@
 #include "Condition.h"
 #include "../Thread.h"
 #include "LogStream.h"
+#include "Logging.h"
 
 class AsyncLog : noncopyable {
     public:

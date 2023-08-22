@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <sys/uio.h>
 #include "Buffer.h"
+#include "base/Logging.h"
 
 
 Buffer::Buffer()
@@ -142,7 +143,7 @@ ssize_t Buffer::readFromFd(int fd) {
 ssize_t Buffer::writeToFd(int fd) {
     ssize_t bytes = ::write(fd, readBegin(), readableBytes());
     if (bytes < 0) {
-        perror("write() error!");
+        LOG_ERROR << "Buffer::writeToFd() failed!";
     }
     else {
         m_read_index += bytes;

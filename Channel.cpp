@@ -1,5 +1,6 @@
 #include <sys/epoll.h>
 #include "Channel.h"
+#include "base/Logging.h"
 
 const int Channel::kNoneEvent = 0;
 const int Channel::kReadEvent = EPOLLIN | EPOLLPRI;
@@ -14,8 +15,9 @@ Channel::Channel(EventLoop* loop, int fd)
 { }
 
 Channel::~Channel() {
-    // todo
-    assert(!m_event_handling);
+    if (m_event_handling == true) {
+        LOG_ERROR << "Channel::~Channel() error!";
+    }
     remove();
 }
 
@@ -25,6 +27,7 @@ void Channel::update() {
 
 void Channel::handleEvent() {
     m_event_handling = true;
+    // when the peer closes the connection and no data in the read buffer
     if (m_revents & EPOLLHUP && !(m_revents & EPOLLIN)) {
         handleCloseEvent();
     }
@@ -95,8 +98,13 @@ void Channel::enableReading() {
     update();
 }
 
+void Channel::disableReading() {
+    m_events &= ~kReadEvent;
+    update();
+}
+
 void Channel::disableAll() {
-    m_events |= kNoneEvent;
+    m_events = kNoneEvent;
     update();
 }
 

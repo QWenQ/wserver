@@ -5,15 +5,23 @@
 #include <iostream>
 #include "Mutex.h"
 #include "noncopyable.h"
+#include "Logging.h"
 
 class Condition : public noncopyable {
     public: 
         Condition(MutexLock& mutex) : m_mutex(mutex) {
-            assert(pthread_cond_init(&m_cond, NULL) == 0); 
+            int ret = pthread_cond_init(&m_cond, NULL);
+            if (ret != 0) {
+                LOG_FATAL << "Condition::Condition() error!";
+            }
+
         }
 
         ~Condition() {
-            assert(pthread_cond_destroy(&m_cond) == 0);
+            int ret = pthread_cond_destroy(&m_cond);
+            if (ret != 0) {
+                LOG_FATAL << "Condition::~Condition() error!";
+            }
         }
 
         int wait() {

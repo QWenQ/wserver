@@ -7,7 +7,7 @@
 #include "base/Logging.h"
 
 void defaultConnectionCallback(const TcpConnectionPtr& conn) {
-    // LOG_INFO << "Server: " << conn->getName() << " build a new connection./n";
+    LOG_INFO << "Server: " << conn->getName() << " build a new connection./n";
 }
 
 void defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buf) {
@@ -15,10 +15,10 @@ void defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buf) {
 }
 
 TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port) 
-:   m_acceptor_loop(loop),
+:   m_main_loop(loop),
     m_name(name),
-    m_acceptor_ptr(new Acceptor(m_acceptor_loop, reuse_port)),
-    m_pool_ptr(new EventLoopThreadPool(m_acceptor_loop)),
+    m_acceptor_ptr(new Acceptor(m_main_loop, reuse_port)),
+    m_pool_ptr(new EventLoopThreadPool(m_main_loop)),
     m_conn_callback(defaultConnectionCallback),
     m_message_callback(defaultMessageCallback),
     m_started(false),
@@ -29,7 +29,7 @@ TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port)
 }
 
 TcpServer::~TcpServer() {
-    m_acceptor_loop->assertInLoopThread();
+    m_main_loop->assertInLoopThread();
     for (auto& it : m_connections) {
         TcpConnectionPtr conn = it.second;
         it.second.reset();
@@ -38,34 +38,46 @@ TcpServer::~TcpServer() {
 }
 
 void TcpServer::newConnection(int fd) {
-    m_acceptor_loop->assertInLoopThread();
+    m_main_loop->assertInLoopThread();
     char buf[32];
-    snprintf(buf, sizeof(buf), "#%d", m_next_conn_id);
+    snprintf(buf, sizeof(buf), "#conn-id: %d", m_next_conn_id);
     ++m_next_conn_id;
     std::string conn_name = m_name + buf;
     EventLoop* io_loop = m_pool_ptr->getNextLoop();
+    LOG_INFO << "TcpServer::newConnection [" << m_name
+                << "] - new connection [" << conn_name
+                << "]";
     TcpConnectionPtr conn(new TcpConnection(io_loop, conn_name, fd));
     m_connections[conn_name] = conn;
     conn->setConnectionCallback(m_conn_callback);
     conn->setMessageCallback(m_message_callback);
-    conn->sestCloseCallback(
+    conn->setCloseCallback(
         std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
     io_loop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn.get()));
 }
 
 void TcpServer::removeConnection(const TcpConnectionPtr& connection) {
-    m_acceptor_loop->runInLoop(std::bind(&TcpServer::removeConnectionInLoop, this, connection));
+    m_main_loop->runInLoop(std::bind(&TcpServer::removeConnectionInLoop, this, connection));
 }
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& connection) {
-    m_acceptor_loop->assertInLoopThread();
+    m_main_loop->assertInLoopThread();
+    LOG_INFO << "TcpServer::removeConnectionInLoop ["
+                << m_name << "] - connection ["
+                << connection->getName() << "]";
     m_connections.erase(connection->getName());
     EventLoop* io_loop = connection->getLoop();
-    io_loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, connection));
+    // io_loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, connection));
+    io_loop->runInLoop(std::bind(&TcpConnection::connectDestroyed, connection));
 }
 
 void TcpServer::start() {
     m_started = true;
     m_pool_ptr->start();
-    m_acceptor_loop->runInLoop(std::bind(&Acceptor::listen, m_acceptor_ptr.get())); 
+    m_main_loop->runInLoop(std::bind(&Acceptor::listen, m_acceptor_ptr.get())); 
+}
+
+
+void TcpServer::setThreadNums(int nums) {
+    m_pool_ptr->setThreadNums(nums);
 }

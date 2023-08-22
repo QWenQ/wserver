@@ -15,6 +15,7 @@ class HttpServer : noncopyable {
         ~HttpServer();
 
         void start();
+        void setThreadNums(int nums) { m_server.setThreadNums(nums); }
     private:
         // report build a new tcp connection
         void onConnection(const TcpConnectionPtr&);

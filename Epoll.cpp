@@ -5,6 +5,7 @@
 #include <string.h>
 #include "Epoll.h"
 #include "Channel.h"
+#include "base/Logging.h"
 
 
 const int Epoll::MAXEVENTS = 10000;
@@ -19,7 +20,7 @@ Epoll::Epoll(EventLoop* loop)
     m_channels() 
 {
     if (m_epollfd < 0) {
-        perror("epoll_create() error!");
+        LOG_FATAL << "EpoLL::Epoll()";
     }
 }
 
@@ -40,25 +41,28 @@ void Epoll::poll(int timeoutMs, ChannelList* activeChannels) {
         }
     }
     else if (nums == 0) {
-        // log: nothing happened
+        // nothing happened
     }
     else if (nums < 0) {
-        // error handling
         if (errno != EINTR) {
-            perror("epoll_wait() error!");
+            LOG_ERROR << "Epoll::poll";
         }
     }
 }
 
 void Epoll::fillActiveChannels(int numEvents, ChannelList* activeChannels) const {
-    assert(static_cast<size_t>(numEvents) <= m_events.size());
+    if (static_cast<size_t>(numEvents) > m_events.size()) {
+        LOG_ERROR << "Epoll::fillActiveChannels() error!";
+    }
     for (int i = 0; i < numEvents; ++i) {
         Channel* channel = static_cast<Channel*>(m_events[i].data.ptr);
         #ifndef NDEBUG
         int fd = channel->fd();
         ChannelMap::const_iterator it = m_channels.find(fd);
-        assert(it != m_channels.end());
-        assert(it->second == channel);
+        if (it == m_channels.end() 
+            || it->second != channel) {
+            LOG_ERROR << "Epoll::fillActiveChannels() error!";
+        }
         #endif // NDEBUG
         channel->setRevents(m_events[i].events);
         activeChannels->push_back(channel);
@@ -71,13 +75,17 @@ void Epoll::updateChannel(Channel* channel) {
         int fd = channel->fd();
         if (index == kNew) {
             // a new connection, EPOLL_CTL_ADD operation
-            assert(m_channels.find(fd) == m_channels.end());
+            if (m_channels.find(fd) != m_channels.end()) {
+                LOG_ERROR << "Epoll::updateChannel() error!";
+            }
             m_channels[fd] = channel;
         }
         else if (index == kDeleted) {
             // reuse the connection deleted before
-            assert(m_channels.find(fd) != m_channels.end());
-            assert(m_channels[fd] == channel);
+            if (m_channels.find(fd) == m_channels.end()
+                || m_channels[fd] != channel) {
+                    LOG_ERROR << "Epoll::updateChannel() error!";
+                }
         }
 
         channel->setIndex(kAdded);
@@ -86,8 +94,10 @@ void Epoll::updateChannel(Channel* channel) {
     else if (index == kAdded) {
         // the connection is being used in current thread loop
         int fd = channel->fd();
-        assert(m_channels.find(fd) != m_channels.end());
-        assert(m_channels[fd] == channel);
+        if (m_channels.find(fd) == m_channels.end()
+            || m_channels[fd] != channel) {
+                LOG_ERROR << "Epoll::updateChannel() error!";
+        }
         if (channel->isNoneEvent()) {
             // no interested I/O events, remove the fd from epoll table
             update(EPOLL_CTL_DEL, channel);
@@ -100,24 +110,6 @@ void Epoll::updateChannel(Channel* channel) {
     } 
 }
 
-/*
-void Epoll::removeChannel(Channel* channel) {
-    assertInLoopThread();
-    int fd = channel->fd();
-    assert(m_channels.find(fd) != m_channels.end());
-    assert(m_channels[fd] == channel);
-    assert(channel->isNoneEvent());
-    int index = channel->index();
-    assert(index == kAdded || index == kDeleted);
-    size_t n = m_channels.erase(fd);
-    assert(n == 1);
-    if (index == kAdded) {
-        update(EPOLL_CTL_DEL, channel);
-    }
-    channel->setIndex(kNew);
-}
-*/
-
 void Epoll::removeChannel(Channel* channel) {
     assertInLoopThread();
     int fd = channel->fd();
@@ -128,7 +120,7 @@ void Epoll::removeChannel(Channel* channel) {
         if (index == kAdded || index == kDeleted) {
             size_t n = m_channels.erase(fd);
             if (n != 1) {
-                perror("std::map::erase() error!");
+                LOG_ERROR << "Epoll::removeChannel failed.";
             }
             if (index == kAdded) {
                 update(EPOLL_CTL_DEL, channel);
@@ -146,6 +138,14 @@ void Epoll::update(int operation, Channel* channel) {
     event.events = channel->events();
     int ret = ::epoll_ctl(m_epollfd, operation, fd, &event);
     if (ret == -1) {
-        perror("epoll_ctl() error!");
+        if (operation == EPOLL_CTL_DEL) {
+            LOG_ERROR << "epoll_ctl op = EPOLL_CTL_DEL fd = " << channel->fd(); 
+        }
+        else if (operation == EPOLL_CTL_ADD) {
+            LOG_FATAL << "epoll_ctl op = EPOLL_CTL_ADD fd = " << channel->fd(); 
+        }
+        else if (operation == EPOLL_CTL_MOD) {
+            LOG_FATAL << "epoll_ctl op = EPOLL_CTL_MOD fd = " << channel->fd(); 
+        }
     }
 }

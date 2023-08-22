@@ -8,8 +8,10 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netinet/tcp.h>
+#include <iostream>
 
 #include "Socket.h"
+#include "base/Logging.h"
 
 const char* ip = "127.0.0.1";
 const unsigned short port = 1234;
@@ -19,7 +21,7 @@ const unsigned short port = 1234;
 Socket::Socket() {    
     m_sockfd = ::socket(PF_INET, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC, IPPROTO_TCP);
     if (m_sockfd < 0) {
-        perror("socket() error!");
+        LOG_ERROR << "Socket::Socket() failed!";
     }
 }
 
@@ -35,18 +37,18 @@ void Socket::bind() {
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_INET;
-    addr.sin_port = port;
     inet_pton(PF_INET, ip, &addr.sin_addr);
+    addr.sin_port = htons(port);
     int ret = ::bind(m_sockfd, (struct sockaddr*)&addr, sizeof(addr));
     if (ret < 0) {
-        perror("bind() error!");
+        LOG_ERROR << "Socket::bind() failed!";
     }
 }
 
 void Socket::listen() {
     int ret = ::listen(m_sockfd, 5);
     if (ret != 0) {
-        // todo: log error
+        LOG_ERROR << "Socket::listen failed!";
     }
 }
 
@@ -64,21 +66,24 @@ int Socket::accept() {
             case EPROTO: 
             case EPERM:
             case EMFILE: break; 
-            default: perror("accept() error!");
+            default: 
+                LOG_FATAL << "Unknown error of ::accept " << saved_errno;
         }
     }
     return new_conn;
 }
 
 void Socket::close() {
-    ::close(m_sockfd);
+    if(::close(m_sockfd) < 0) {
+        LOG_ERROR << "sockets::close";
+    }
 }
 
 void Socket::shutdownWrite() {
     // shutdown() will close the socket immediately in the spcified way 
     // instead of decreasing the reference count of the socket like close()
     if (::shutdown(m_sockfd, SHUT_WR) < 0) {
-        perror("shutdown() error!");
+        LOG_ERROR << "Socket::shutdownWrite failed!";
     }
 }
 
@@ -86,7 +91,7 @@ void Socket::setTcpNoDelay(bool on) {
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(m_sockfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval));
     if (ret < 0) {
-        perror("set TCP no delay error!");
+        LOG_ERROR << "TCP_NODELAY failed!";
     }
 }
 
@@ -94,7 +99,7 @@ void Socket::setTcpKeepAlive(bool on) {
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
     if (ret < 0) {
-        perror("set TCP keep alive error!");
+        LOG_ERROR << "SO_KEEPALIVE failed!";
     }
 }
 
@@ -102,15 +107,15 @@ void Socket::setNonBlock(bool on) {
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SOCK_NONBLOCK, &optval, sizeof(optval));
     if (ret < 0) {
-        perror("set non block error!");
+        LOG_ERROR << "SOCK_NONBLOCK failed!";
     }
 }
 
 void Socket::setReuseAddr(bool on) {
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-    if (ret < 0) {
-        perror("set reuse address error!");
+    if (ret < 0 && on) {
+        LOG_ERROR << "SO_REUSEADDR failed!";
     }
 }
 
@@ -118,18 +123,10 @@ void Socket::setReusePort(bool on) {
     int optval = on ? 1 : 0;
     int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEPORT, &optval, sizeof(optval));
     if (ret < 0) {
-        perror("set reuse port error!");
+        LOG_ERROR << "SO_REUSEPORT failed!";
     }
 }
 
 void Socket::setLinger(bool on) {
     // todo
-}
-
-void Socket::setKeepAlive(bool on) {
-    int optval = on ? 1 : 0;
-    int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
-    if (ret < 0) {
-        perror("set keep alive error!");
-    }
 }

@@ -32,6 +32,7 @@ class Channel {
         void setCloseHandler(const Callback& close_handler);
 
         void enableReading();
+        void disableReading();
         void disableAll();
         void enableWriting();
         void disableWriting();

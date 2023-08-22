@@ -116,13 +116,16 @@ void HttpContext::handleHttpRequest() {
             if (m_request_state == BAD_REQUEST) {
                 return;
             }
+            line_status = parseLine();
         }
         else if (m_check_state == CHECK_STATE_HEADER) {
             parseMessageHeader();
             if (m_request_state == BAD_REQUEST) {
                 return;
             }
-            
+            if (m_check_state != CHECK_STATE_BODY) {
+                line_status = parseLine();
+            }
         }
         else if (m_check_state == CHECK_STATE_BODY) {
             parseMessageBody();
@@ -131,7 +134,6 @@ void HttpContext::handleHttpRequest() {
             }
             break;
         }
-        line_status = parseLine();
     }
 
     if (line_status == LINE_OPEN) {
@@ -198,8 +200,8 @@ void HttpContext::parseRequestLine() {
 
 void HttpContext::parseMessageHeader() {
     // todo
-    // headers end with line "\r\n"
-    if (m_new_line == "\r\n") {
+    // if get a "\0\0" line, which means get the end of the header lines
+    if (!m_new_line.empty() && m_new_line[0] == '\0') {
         m_check_state = CHECK_STATE_BODY;
         m_request_state = NO_REQUEST;
         return;
@@ -230,7 +232,6 @@ void HttpContext::parseMessageBody() {
 }
 
 void HttpContext::getHttpResponseMessage(std::string& msg) {
-    std::string msg;
     if (m_version == HTTP_1_0) {
         msg += "Http/1.0 ";
     }

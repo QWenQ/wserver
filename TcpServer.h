@@ -34,6 +34,7 @@ class TcpServer : noncopyable {
 
 
         void setThreadNums(int nums);
+        const std::string& getName() const { return m_name; }
 
         
 
@@ -45,7 +46,7 @@ class TcpServer : noncopyable {
         typedef std::map<std::string, TcpConnectionPtr> ConnectionMap; 
 
         // the loop is the owner of acceptor
-        EventLoop* m_acceptor_loop;
+        EventLoop* m_main_loop;
         std::string m_name;
         std::unique_ptr<Acceptor> m_acceptor_ptr;
         std::unique_ptr<EventLoopThreadPool> m_pool_ptr;

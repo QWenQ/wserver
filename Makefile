@@ -8,13 +8,14 @@ SOURCES = main.cpp Acceptor.cpp Buffer.cpp Channel.cpp Epoll.cpp EventLoop.cpp E
 OBJECTS = $(SOURCES:.cpp=.o)
 
 CC = g++
-CPPFLAGS = -g -Wall -std=c++2a
+CPPFLAGS = -g -Wall -std=c++2a -lpthread
 
 vpath %.cpp base/
 vpath %.h base/
 
 $(TARGET) : $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(CPPFLAGS)
+	# make cleanButTarget
 
 all : $(OBJECTS)
 

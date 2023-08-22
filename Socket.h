@@ -23,7 +23,7 @@ class Socket {
         void setReuseAddr(bool on);
         void setReusePort(bool on);
         void setLinger(bool on);
-        void setKeepAlive(bool on);
+
 
     private:
         int m_sockfd;

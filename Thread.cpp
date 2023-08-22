@@ -6,6 +6,7 @@
 
 #include "Thread.h"
 #include "base/CurrentThread.h"
+#include "base/Logging.h"
 
 struct ThreadData {
     typedef Thread::ThreadFunc ThreadFunc;
@@ -61,13 +62,14 @@ void Thread::start() {
     ThreadData* data = new ThreadData(m_func, &m_tid, &m_latch);
     int ret = pthread_create(&m_ptid, NULL, &startThread, data);
     if (ret != 0) {
-        perror("pthread_create() error!");
-        return;
+        LOG_FATAL << "pthread_create() failed!";
     }
     // the resources are automatically released back to the system
     // without the need for another thread to join with the terminated thread.
     pthread_detach(m_ptid);
     // wait until the thread gets its tid
     m_latch.wait();
-    assert(m_tid > 0);
+    if (m_tid <= 0) {
+        LOG_FATAL << "Thread::start() error!";
+    }
 }

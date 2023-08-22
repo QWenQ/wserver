@@ -5,15 +5,22 @@
 #include <assert.h>
 #include <iostream>
 #include "noncopyable.h"
+#include "Logging.h"
 
 class MutexLock : public noncopyable {
     public: 
         MutexLock() {
-            assert(pthread_mutex_init(&m_mutex, NULL) == 0);
+            int ret = pthread_mutex_init(&m_mutex, NULL);
+            if (ret != 0) {
+                LOG_FATAL << "MutexLock::MutexLock() error!";
+            }
         }
 
         ~MutexLock() {
-            assert(pthread_mutex_destroy(&m_mutex) == 0);
+            int ret = pthread_mutex_destroy(&m_mutex);
+            if (ret != 0) {
+                LOG_FATAL << "MutexLock::~MutexLock() error!";
+            }
         }
 
         // called only by MutexLockGuard

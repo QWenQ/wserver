@@ -1,6 +1,7 @@
 #include "Logging.h"
 #include "CurrentThread.h"
 #include "timeUtils.h"
+#include "AsyncLog.h"
 
 #include <chrono>
 #include <sstream>
@@ -35,12 +36,29 @@ void Logger::Impl::formatTime() {
     m_stream << time_stamp << " ";
 }
 
+
+const off_t kRollSize = 500 * 1000 * 1000;
+std::unique_ptr<AsyncLog> g_asylog;
+static pthread_once_t once_control = PTHREAD_ONCE_INIT;
+
+
+void init_routine() {
+    g_asylog.reset(new AsyncLog(::basename(__FILE__), kRollSize));
+    g_asylog->start();
+}
+
 Logger::Logger(const std::string& basename, int line, Logger::LogLevel level) 
 :   m_impl(level, basename, line)
 { }
 
+
 void defaultOutputFunc(const char* msg, size_t len) {
-    fwrite(msg, 1, len, stdout);
+    int ret = pthread_once(&once_control, init_routine);
+    if (ret != 0) {
+        perror("pthread_once() failed:");
+        abort();
+    }
+    g_asylog->append(msg, len);
 }
 
 void defaultFlushFunc() {
@@ -55,7 +73,7 @@ Logger::~Logger() {
     // write data left in the buffer of m_impl.m_stream to the asyncLog thread
     m_impl.finish();
     g_output(stream().buffer(), stream().size());
-    if (m_impl.m_level == Logger::ERROR) {
+    if (m_impl.m_level == Logger::FATAL) {
         g_flush();
         abort();
     }
