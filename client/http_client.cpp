@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     inet_pton(AF_INET, ip, &addr.sin_addr);
     int ret = ::connect(sockfd, (struct sockaddr*)&addr, sizeof(addr));
     if (ret == 0) {
-        std::string request = "GET /favicon.ico http/1.0\r\n\r\n";
+        std::string request = "GET / HTTP/1.0\r\n\r\n";
         write(sockfd, request.c_str(), request.size());
         int cnt = read(sockfd, buf, sizeof(buf) - 1);
         if (cnt < 0) {

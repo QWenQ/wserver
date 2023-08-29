@@ -23,14 +23,18 @@ Socket::Socket() {
     if (m_sockfd < 0) {
         LOG_ERROR << "Socket::Socket() failed!";
     }
+    m_closed = false;
 }
 
-Socket::Socket(int fd) 
-:   m_sockfd(fd)
+Socket::Socket(int fd, bool closed) 
+:   m_sockfd(fd),
+    m_closed(closed)
 { }
 
 Socket::~Socket() {
-    ::close(m_sockfd); 
+    if (!m_closed && ::close(m_sockfd) < 0) {
+        LOG_ERROR << "sockets::close";
+    }
 }
 
 void Socket::bind() {
@@ -74,8 +78,13 @@ int Socket::accept() {
 }
 
 void Socket::close() {
-    if(::close(m_sockfd) < 0) {
-        LOG_ERROR << "sockets::close";
+    if (!m_closed) {
+        if (::close(m_sockfd) < 0) {
+            LOG_ERROR << "sockets::close";
+        }
+        else {
+            m_closed = true;
+        }
     }
 }
 

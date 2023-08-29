@@ -4,7 +4,7 @@
 class Socket {
     public:
         Socket();
-        Socket(int fd);
+        Socket(int fd, bool closed = false);
         ~Socket();
 
         void bind();
@@ -27,5 +27,6 @@ class Socket {
 
     private:
         int m_sockfd;
+        bool m_closed;
 }; // class Socket
 #endif // SOCKET_H

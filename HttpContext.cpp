@@ -183,10 +183,10 @@ void HttpContext::parseRequestLine() {
     while (m_new_line[end] != ' ' && m_new_line[end] != '\0') {
         ++end;
     }
-    if (m_new_line.substr(start, end - start) == "http/1.0") {
+    if (m_new_line.substr(start, end - start) == "HTTP/1.0") {
         m_version = HTTP_1_0;
     }
-    else if (m_new_line.substr(start, end -start) == "http/1.1") {
+    else if (m_new_line.substr(start, end -start) == "HTTP/1.1") {
         m_version = HTTP_1_1;
     }
     else {
@@ -233,10 +233,10 @@ void HttpContext::parseMessageBody() {
 
 void HttpContext::getHttpResponseMessage(std::string& msg) {
     if (m_version == HTTP_1_0) {
-        msg += "Http/1.0 ";
+        msg += "HTTP/1.0 ";
     }
     else {
-        msg += "Http/1.1 ";
+        msg += "HTTP/1.1 ";
     }
 
     if (m_request_state == NO_REQUEST) {
@@ -253,6 +253,7 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
             // response headers
             msg += "Content-Type: text/html\r\n";
             msg += "Header: QWQ-SERVER\r\n"; 
+            msg += "Connection: close\r\n";
             msg += "\r\n";
             // response body
             std::string now = timeStamp();
@@ -263,16 +264,20 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
         else if (m_uri == "/favicon.ico") {
             msg += "200 OK\r\n";
             msg += "Content-Type: image/png\r\n";
+            msg += "Connection: close\r\n";
             msg += "Header: QWQ-SERVER\r\n"; 
             msg += "\r\n";
             msg += std::string(favicon);
         }
         else if (m_uri == "/hello") {
             msg += "200 OK\r\n";
-            msg += "text/plain\r\n";
+            msg += "Content-Type: text/plain\r\n";
+            msg += "Connection: close\r\n";
             msg += "Header: QWQ-SERVER\r\n"; 
             msg += "\r\n";
+            msg += "<html><head>";
             msg += "hello, world!\n";
+            msg += "</head></html>";
         }
         else {
             msg += "404 Not Found\r\n";
@@ -281,6 +286,7 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
     }
     else if (m_request_state == BAD_REQUEST) {
         msg += "400 Bad Request\r\n";
+        msg += "Connection: close\r\n";
         msg += "\r\n";
     }
     else if (m_request_state == FORBIDDEN_REQUEST) {

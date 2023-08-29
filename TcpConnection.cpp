@@ -65,6 +65,7 @@ void TcpConnection::connectDestroyed() {
         m_channel->disableAll();
     }
     m_channel->remove();
+    // m_socket_ptr->close();
 }
 
 void TcpConnection::handleRead() {
@@ -101,7 +102,7 @@ void TcpConnection::handleWrite() {
 void TcpConnection::handleClose() {
     m_loop->assertInLoopThread();
     // debug
-    LOG_INFO << "TcpConnection::handleClose() is called by loop " << m_loop;
+    // LOG_INFO << "TcpConnection::handleClose() is called by loop " << m_loop;
     if (m_state != kConnected) {
         LOG_INFO << "state should be kConnected instead of " << stateToString();
         LOG_FATAL << "TcpConnection::handleClose() error!";
