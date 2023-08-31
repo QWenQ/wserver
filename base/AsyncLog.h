@@ -30,6 +30,8 @@ class AsyncLog : noncopyable {
 
         // called by the front end
         void append(const char* msg, size_t len);
+
+        void flush();
     private:
         // used by the back end
         void threadFunc();
@@ -40,6 +42,8 @@ class AsyncLog : noncopyable {
         typedef BufferVector::value_type BufferPtr;
 
         bool m_running;
+        // true if log fatal event happens
+        bool m_flush;
         const int m_flush_interval;
         Thread m_thread;
         const std::string m_basename;
@@ -47,6 +51,7 @@ class AsyncLog : noncopyable {
         CountDownLatch m_latch;
         MutexLock m_mutex;
         Condition m_cond;
+        Condition m_flush_cond;
         BufferPtr m_cur_buffer;
         BufferPtr m_next_buffer;
         BufferVector m_buffers;

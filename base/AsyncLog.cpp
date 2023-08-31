@@ -8,6 +8,7 @@
 
 AsyncLog::AsyncLog(const std::string& basename, off_t roll_size, int flush_interval) 
 :   m_running(false),
+    m_flush(false),
     m_flush_interval(flush_interval),
     m_thread(std::bind(&AsyncLog::threadFunc, this)),
     m_basename(basename),
@@ -15,6 +16,7 @@ AsyncLog::AsyncLog(const std::string& basename, off_t roll_size, int flush_inter
     m_latch(1),
     m_mutex(),
     m_cond(m_mutex),
+    m_flush_cond(m_mutex),
     m_cur_buffer(new Buffer()),
     m_next_buffer(new Buffer()),
     m_buffers()
@@ -45,6 +47,12 @@ void AsyncLog::append(const char* msg, size_t len) {
     }
 }
 
+void AsyncLog::flush() {
+    // notify log thread to write all buffered data into log file
+    // and not quit until flush is over
+    m_flush = true;
+    m_flush_cond.wait(); 
+}
 
 void AsyncLog::threadFunc() {
     m_latch.countDown();
@@ -104,6 +112,12 @@ void AsyncLog::threadFunc() {
         write_to_file.clear();
         // write data to file
         output.flush();
+        if (m_flush) {
+            m_running = false;
+        }
     }
     output.flush();
+    if (m_flush) {
+        m_flush_cond.signal();
+    }
 }

@@ -45,7 +45,7 @@ void bench(const char* type) {
 }
 
 int main() {
-
+    /*
     // bench for nop
     bench("nop");
     // bench for log file
@@ -67,6 +67,10 @@ int main() {
     // roll size 50
     g_log_file.reset(new LogFile("test_log_st", 50 * 1000 * 1000));
     bench("test_log_st");
+    */
+
+    LOG_INFO << "hello, world!";
+    LOG_FATAL << "Log Fatal level test";
 
     return 0;
 }

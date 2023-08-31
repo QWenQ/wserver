@@ -1,34 +1,41 @@
 TARGET = Logging_test
-OBJECTS = Logging_test.o Logging.o LogStream.o LogFile.o FileUtil.o timeUtils.o CurrentThread.o
+SOURCES = Logging_test.cpp Logging.cpp LogStream.cpp LogFile.cpp FileUtil.cpp timeUtils.cpp CurrentThread.cpp AsyncLog.cpp Thread.cpp CountDownLatch.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
+
 CC = g++
-FLAGSCPP = -g -Wall -std=c++2a
+
+CPPFLAGS = -g -Wall -std=c++2a -lpthread
 
 vpath %.cpp /home/daydayup/wserver : /home/daydayup/wserver/base
 vpath %.h /home/daydayup/wserver : /home/daydayup/wserver/base
 
+
 $(TARGET) : $(OBJECTS)
-	$(CC) -o $(TARGET) $(OBJECTS) $(FLAGSCPP)
+	$(CC) -o $@ $(OBJECTS) $(CPPFLAGS)
+	make -f Makefile_Logging_test cleanAllButTarget
 
-Logging_test.o : ../Logging.h ../LogFile.h
-	$(CC) -c Logging_test.cpp $(FLAGSCPP)
+all : $(OBJECTS)
 
-Logging.o : ../Logging.h ../CurrentThread.h
-	$(CC) -c ../Logging.cpp $(FLAGSCPP)
+$(OBJECTS) : %.o : %.cpp %.d
+	$(CC) -c $(CPPFLAGS) $< -o $@
 
-LogStream.o : ../LogStream.h
-	$(CC) -c ../LogStream.cpp $(FLAGSCPP)
+%.d : %.cpp
+	@set -e; rm -rf $@.$$$$; \
+	$(CC) -MM $(CPPFLAGS) $< > $@.$$$$; \
+	sed 's, \($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -rf $@.$$$$
 
-LogFile.o : ../LogFile.h ../FileUtil.h
-	$(CC) -c ../LogFile.cpp $(FLAGSCPP)
+DEPENDENCIES = $(SOURCES:.cpp=.d)
+-include $(DEPENDENCIES)
 
-FileUtil.o : ../FileUtil.h
-	$(CC) -c ../FileUtil.cpp $(FLAGSCPP)
-
-timeUtils.o : ../timeUtils.h
-	$(CC) -c ../timeUtils.cpp $(FLAGSCPP)
-
-CurrentThread.o : ../CurrentThread.h
-	$(CC) -c ../CurrentThread.cpp $(FLAGSCPP)
-
-clean:
-	-rm -rf Logging_test *.o
+.PHONY : cleanAll cleanTarget cleanObjects cleanDependencies cleanAllButTarget
+cleanAll:
+	rm -rf $(TARGET) $(DEPENDENCIES) $(OBJECTS)
+cleanTarget:
+	-rm -rf $(TARGET)
+cleanObjects:
+	-rm -rf $(OBJECTS)
+cleanDependencies:
+	-rm -rf $(DEPENDENCIES)
+cleanAllButTarget:
+	-rm -rf $(DEPENDENCIES) $(OBJECTS)

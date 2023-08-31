@@ -6,12 +6,15 @@
 #include "../AsyncLog.h"
 #include "../Logging.h"
 
+/*
 const off_t kRollSize = 500 * 1000 * 1000;
-
 AsyncLog* g_async_log = NULL;
-
 void asyncOutput(const char* msg, size_t len) {
     g_async_log->append(msg, len);
+}
+
+void asyncFlush() {
+    g_async_log->flush();
 }
 
 void bench(bool long_log) {
@@ -31,10 +34,12 @@ void bench(bool long_log) {
         sleep(1);
     }
 }
+*/
 
 
 int main(int argc, char* argv[]) {
-    Logger::setOutputFunc(asyncOutput);
+    /*
+    // Logger::setOutputFunc(asyncOutput);
     {
         size_t kOneGB = 1000 * 1024 * 1024;
         rlimit rl = {2 * kOneGB, 2 * kOneGB};
@@ -49,6 +54,9 @@ int main(int argc, char* argv[]) {
     asylog.start();
     bool long_log = (argc > 1);
     bench(long_log);
+    */
+    LOG_INFO << "hello world!";
+    LOG_FATAL << "log fatal test";
     return 0;
 }
 

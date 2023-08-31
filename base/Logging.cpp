@@ -9,7 +9,7 @@
 #include <iomanip>
 
 
-const char* log_level_name[]{ "INFO", "WARN", "ERROR" };
+const char* log_level_name[]{ "INFO", "WARN", "ERROR", "FATAL" };
 
 // init g_log_level
 Logger::LogLevel g_loglevel = Logger::INFO;
@@ -62,7 +62,9 @@ void defaultOutputFunc(const char* msg, size_t len) {
 }
 
 void defaultFlushFunc() {
-    ::fflush(stdout);
+    // ::fflush(stdout);
+    // notify g_asylog to flush its all buffered data into log file
+    g_asylog->flush();
 }
 
 Logger::outputFunc g_output = defaultOutputFunc;

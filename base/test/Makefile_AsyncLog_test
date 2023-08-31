@@ -1,47 +1,42 @@
-OBJECTS = AsyncLog_test.o AsyncLog.o Logging.o LogStream.o \
-			LogFile.o FileUtil.o CurrentThread.o timeUtils.o \
-			Thread.o CountDownLatch.o
+TARGET = AsyncLog_test
+
+SOURCES = AsyncLog_test.cpp AsyncLog.cpp Logging.cpp LogStream.cpp \
+	  LogFile.cpp FileUtil.cpp CurrentThread.cpp timeUtils.cpp \
+	  Thread.cpp CountDownLatch.cpp
+
+OBJECTS = $(SOURCES:.cpp=.o)
+
 CC = g++
-FLAGSCPP = -g -std=c++2a -Wall
+
+CPPFLAGS = -g -std=c++2a -Wall -lpthread
 
 vpath %.cpp /home/daydayup/wserver : /home/daydayup/wserver/base
 vpath %.h /home/daydayup/wserver : /home/daydayup/wserver/base
 
+$(TARGET) : $(OBJECTS)
+	$(CC) -o $@ $(OBJECTS) $(CPPFLAGS)
+	make cleanButTarget
 
+all : $(OBJECTS)
 
-AsyncLog_test : $(OBJECTS) 
-	$(CC) -o AsyncLog_test $(OBJECTS) $(FLAGSCPP)
+$(OBJECTS) : %.o : %.cpp %.d
+	$(CC) -c $(CPPFLAGS) $< -o $@
 
-#all : $(OBJECTS)
+%.d : %.cpp
+	@set -e; rm -rf $@.$$$$;\
+	$(CC) -MM $(CPPFLAGS) $< > $@.$$$$;\
+	sed 's, \($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@;\
+	rm -rf $@.$$$$
 
-#$(OBJECTS) : %.o : %.cpp
-#	$(CC) -c $(FLAGSCPP) $< -o $@
+DEPENDENCIES = $(SOURCES:.CPP=.d)
+-include $(DEPENDENCIES)
 
-AsyncLog_test.o : ../AsyncLog.h ../Logging.h
-	$(CC) -c AsyncLog_test.cpp $(FLAGSCPP)
-
-AsyncLog.o : ../AsyncLog.h ../LogFile.h ../timeUtils.h
-	$(CC) -c ../AsyncLog.cpp $(FLAGSCPP) 
-
-Logging.o : ../Logging.h ../CurrentThread.h ../timeUtils.h
-	$(CC) -c ../Logging.cpp $(FLAGSCPP)
-
-LogStream.o : ../LogStream.h
-	$(CC) -c ../LogStream.cpp $(FLAGSCPP)
-
-LogFile.o : ../LogFile.h ../FileUtil.h
-	$(CC) -c ../LogFile.cpp $(FLAGSCPP)
-
-FileUtil.o : ../FileUtil.h
-	$(CC) -c ../FileUtil.cpp $(FLAGSCPP)
-
-CurrentThread.o : ../CurrentThread.h
-	$(CC) -c ../CurrentThread.cpp $(FLAGSCPP)
-
-timeUtils.o : ../timeUtils.h
-	$(CC) -c ../timeUtils.cpp $(FLAGSCPP)
-
-
-.PHONY : clean
-clean :
-	-rm -rf AsyncLog_test *.o
+.PHONY : cleanAll cleanObjects cleanDependencies cleanAllButTarget
+cleanAll :
+	-rm -rf $(TARGET) $(OBJECTS) $(DEPENDENCIES)
+cleanObjects :
+	-rm -rf $(OBJECTS)
+cleanDependencies :
+	-rm -rf $(DEPENDENCIES)
+cleanAllButTarget :
+	-rm -rf $(OBJECTS) $(DEPENDENCIES)
