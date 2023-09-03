@@ -59,6 +59,7 @@ void TcpConnection::connectEstablished() {
 }
 
 void TcpConnection::connectDestroyed() {
+    LOG_INFO << "Debug: TcpConnection::connectDestroyed()";
     m_loop->assertInLoopThread();
     if (m_state == kConnected) {
         setState(kDisconnected);
@@ -74,6 +75,7 @@ void TcpConnection::connectDestroyed() {
 }
 
 void TcpConnection::handleRead() {
+    LOG_INFO << "Debug: TcpConnection::handleRead()";
     int sockfd = m_socket_ptr->getFd();
     ssize_t bytes = m_input_buffer.readFromFd(sockfd);
     if (bytes > 0) {
@@ -105,6 +107,7 @@ void TcpConnection::handleWrite() {
 }
 
 void TcpConnection::handleClose() {
+    LOG_INFO << "Debug: TcpConnection::handleClose()";
     m_loop->assertInLoopThread();
     // debug
     // LOG_INFO << "TcpConnection::handleClose() is called by loop " << m_loop;
