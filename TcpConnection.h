@@ -61,8 +61,6 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         void handleError();
         void sendInLoop(const std::string& message);
         void shutdownInLoop();
-        
-
 
         // accptor loop
         EventLoop* m_loop;

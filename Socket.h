@@ -1,6 +1,9 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
+#include <fcntl.h>
+#include <errno.h>
+
 class Socket {
     public:
         Socket();
@@ -23,6 +26,8 @@ class Socket {
         void setReuseAddr(bool on);
         void setReusePort(bool on);
         void setLinger(bool on);
+
+        bool isValid() const { return ::fcntl(m_sockfd, F_GETFL) != -1 || errno != EBADF; }
 
 
     private:

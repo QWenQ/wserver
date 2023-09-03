@@ -114,6 +114,7 @@ void EventLoop::runInLoop(const Functor& cb) {
 }
 
 void EventLoop::queueInLoop(const Functor& cb) {
+    // LOG_INFO << "Debug: EventLoop::queueInLoop() begin";
     {
         MutexLockGuard lock(m_mutex);
         m_pending_functors.push_back(cb);
@@ -123,6 +124,7 @@ void EventLoop::queueInLoop(const Functor& cb) {
         // LOG_INFO << "wake up in EventLoop::queueInLoop() in EventLoop " << this;
         wakeup();
     }
+    // LOG_INFO << "Debug: EventLoop::queueInLoop() end";
 }
 
 void EventLoop::removeChannel(Channel* channel) {

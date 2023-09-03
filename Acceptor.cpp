@@ -32,6 +32,8 @@ void Acceptor::handleRead() {
     m_loop->assertInLoopThread();
     int connfd = m_socket.accept();
     if (connfd >= 0) {
+        // debug
+        LOG_INFO << "Debug: get new conn " << connfd;
         if (m_new_conn_callback) {
             m_new_conn_callback(connfd);
         }
