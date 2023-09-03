@@ -65,10 +65,12 @@ void TcpConnection::connectDestroyed() {
         m_channel->disableAll();
     }
     m_channel->remove();
+    /*
     m_socket_ptr->close();
     if (m_socket_ptr->isValid()) {
         LOG_INFO << "Debug: fd " << m_socket_ptr->getFd() << " is not closed!";
     }
+    */
 }
 
 void TcpConnection::handleRead() {
