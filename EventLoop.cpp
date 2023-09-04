@@ -114,17 +114,16 @@ void EventLoop::runInLoop(const Functor& cb) {
 }
 
 void EventLoop::queueInLoop(const Functor& cb) {
-    // LOG_INFO << "Debug: EventLoop::queueInLoop() begin";
+    LOG_DEBUG << "EventLoop::queueInLoop() begin";
     {
         MutexLockGuard lock(m_mutex);
         m_pending_functors.push_back(cb);
     }
     if (!isInLoopThread() || m_calling_pending_functors) {
-        // debug info
-        // LOG_INFO << "wake up in EventLoop::queueInLoop() in EventLoop " << this;
+        LOG_DEBUG << "wake up in EventLoop::queueInLoop() in EventLoop " << this;
         wakeup();
     }
-    // LOG_INFO << "Debug: EventLoop::queueInLoop() end";
+    LOG_DEBUG << "EventLoop::queueInLoop() end";
 }
 
 void EventLoop::removeChannel(Channel* channel) {

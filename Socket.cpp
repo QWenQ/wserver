@@ -32,7 +32,7 @@ Socket::Socket(int fd, bool closed)
 { }
 
 Socket::~Socket() {
-    LOG_INFO << "Debug: Socket::~Socket()";
+    LOG_DEBUG << "Socket::~Socket()";
     if (!m_closed && ::close(m_sockfd) < 0) {
         LOG_ERROR << "sockets::close";
     }
@@ -86,7 +86,7 @@ void Socket::close() {
         else {
             m_closed = true;
         }
-        LOG_INFO << "Debug: close fd: " << m_sockfd;
+        LOG_DEBUG << "close fd: " << m_sockfd;
     }
 }
 

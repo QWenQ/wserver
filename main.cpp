@@ -2,6 +2,8 @@
 #include "EventLoop.h"
 
 int main(int argc, char* argv[]) {
+    // debug
+    Logger::setLogLevel(Logger::DEBUG);
     EventLoop loop;
     HttpServer server(&loop);
     // debug

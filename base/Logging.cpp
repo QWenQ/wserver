@@ -9,7 +9,7 @@
 #include <iomanip>
 
 
-const char* log_level_name[]{ "INFO", "WARN", "ERROR", "FATAL" };
+const char* log_level_name[]{ "DEBUG", "INFO", "ERROR", "FATAL" };
 
 // init g_log_level
 Logger::LogLevel g_loglevel = Logger::INFO;

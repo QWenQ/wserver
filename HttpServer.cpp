@@ -24,9 +24,11 @@ void HttpServer::onConnection(const TcpConnectionPtr& conn) {
 }
 
 void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf) {
+    LOG_DEBUG << "HttpServer::onMessage() begin";
     HttpContext context(buf);
     context.handleHttpRequest();
     std::string http_response;
     context.getHttpResponseMessage(http_response);
     conn->send(http_response);
+    LOG_DEBUG << "HttpServer::onMessage() end";
 }

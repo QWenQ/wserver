@@ -57,7 +57,7 @@ void TcpServer::newConnection(int fd) {
 }
 
 void TcpServer::removeConnection(const TcpConnectionPtr& connection) {
-    LOG_INFO << "Debug: TcpServer::removeConnection()";
+    LOG_DEBUG << "TcpServer::removeConnection()";
     m_main_loop->runInLoop(std::bind(&TcpServer::removeConnectionInLoop, this, connection));
 }
 

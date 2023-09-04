@@ -59,27 +59,23 @@ void TcpConnection::connectEstablished() {
 }
 
 void TcpConnection::connectDestroyed() {
-    LOG_INFO << "Debug: TcpConnection::connectDestroyed()";
+    LOG_DEBUG << "TcpConnection::connectDestroyed()";
     m_loop->assertInLoopThread();
     if (m_state == kConnected) {
         setState(kDisconnected);
         m_channel->disableAll();
     }
     m_channel->remove();
-    /*
-    m_socket_ptr->close();
-    if (m_socket_ptr->isValid()) {
-        LOG_INFO << "Debug: fd " << m_socket_ptr->getFd() << " is not closed!";
-    }
-    */
 }
 
 void TcpConnection::handleRead() {
-    LOG_INFO << "Debug: TcpConnection::handleRead()";
+    LOG_DEBUG << "TcpConnection::handleRead()";
     int sockfd = m_socket_ptr->getFd();
     ssize_t bytes = m_input_buffer.readFromFd(sockfd);
+    LOG_DEBUG << "read bytes " << bytes;
     if (bytes > 0) {
         m_message_callback(shared_from_this(), &m_input_buffer);
+        handleClose();
     }
     else if (bytes == 0) {
         handleClose();
@@ -107,12 +103,11 @@ void TcpConnection::handleWrite() {
 }
 
 void TcpConnection::handleClose() {
-    LOG_INFO << "Debug: TcpConnection::handleClose()";
+    LOG_DEBUG << "TcpConnection::handleClose()";
     m_loop->assertInLoopThread();
-    // debug
-    // LOG_INFO << "TcpConnection::handleClose() is called by loop " << m_loop;
+    LOG_DEBUG << "TcpConnection::handleClose() is called by loop " << m_loop;
     if (m_state != kConnected) {
-        LOG_INFO << "state should be kConnected instead of " << stateToString();
+        LOG_DEBUG << "state should be kConnected instead of " << stateToString();
         LOG_FATAL << "TcpConnection::handleClose() error!";
     }
     setState(kDisconnected);
@@ -159,7 +154,7 @@ void TcpConnection::send(const std::string& message) {
 void TcpConnection::sendInLoop(const std::string& message) {
     m_loop->assertInLoopThread();
     if (m_state == kDisconnected) {
-        LOG_WARN << "disconnected, give up writing";
+        LOG_ERROR << "disconnected, give up writing";
         return;
     }
     ssize_t bytes = 0;
