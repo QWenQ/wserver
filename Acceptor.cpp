@@ -20,6 +20,7 @@ Acceptor::~Acceptor() {
 
 
 void Acceptor::listen() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     // bind the address to listen socket
     m_socket.bind();
@@ -29,6 +30,7 @@ void Acceptor::listen() {
 }
 
 void Acceptor::handleRead() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     int connfd = m_socket.accept();
     if (connfd >= 0) {

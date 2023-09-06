@@ -78,7 +78,8 @@ char favicon[555] = {
 
 
 HttpContext::HttpContext(Buffer* buffer)
-:   m_method(GET), 
+:   m_close_connection(true),
+    m_method(GET), 
     m_version(HTTP_1_0),
     m_connection(CLOSE),
     m_request_state(NO_REQUEST),
@@ -212,7 +213,9 @@ void HttpContext::parseMessageHeader() {
             ++start;
         }
         if (strncasecmp(m_new_line.data() + start, "Keep-Alive", 10) == 0) {
+            // long connection
             m_connection = KEEP_ALIVE;
+            m_close_connection = false;
         }
         else {
             m_request_state = BAD_REQUEST;

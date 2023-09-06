@@ -70,6 +70,7 @@ void EventLoop::loop() {
     if (m_looping) {
         LOG_ERROR << "EventLoop::loop() error!";
     }
+    // LOG_DEBUG << "assertInLoopThread()";
     assertInLoopThread();
     m_looping = true;
     m_quit = false;
@@ -80,7 +81,7 @@ void EventLoop::loop() {
         m_event_handling = true;
         for (Channel* it : m_active_channels) {
             m_current_active_channel = it;
-            it->handleEvent();
+            m_current_active_channel->handleEvent();
         }
         m_current_active_channel = NULL;
         m_event_handling = false;
@@ -93,6 +94,7 @@ void EventLoop::updateChannel(Channel* channel) {
     if (channel->ownerLoop() != this) {
         LOG_FATAL << "EventLoop::updateChannel() error!";
     }
+    // LOG_DEBUG << "assertInLoopThread() begin";
     assertInLoopThread();
     m_epoll->updateChannel(channel);
 }
@@ -102,22 +104,22 @@ void EventLoop::runAfter(time_t delay, const TimerCallBack& cb) {
     m_timer_heap->addTimer(std::move(cb), delay);
 }
 
-void EventLoop::runInLoop(const Functor& cb) {
+void EventLoop::runInLoop(Functor cb) {
     if (isInLoopThread()) {
         // if the loop is in its owner thread, call back cb()
         cb();
     }
     else {
         // or add it to a queue to wake loop's owner thread up to call the cb()
-       queueInLoop(cb); 
+       queueInLoop(std::move(cb)); 
     }
 }
 
-void EventLoop::queueInLoop(const Functor& cb) {
+void EventLoop::queueInLoop(Functor cb) {
     LOG_DEBUG << "EventLoop::queueInLoop() begin";
     {
         MutexLockGuard lock(m_mutex);
-        m_pending_functors.push_back(cb);
+        m_pending_functors.push_back(std::move(cb));
     }
     if (!isInLoopThread() || m_calling_pending_functors) {
         LOG_DEBUG << "wake up in EventLoop::queueInLoop() in EventLoop " << this;
@@ -130,8 +132,10 @@ void EventLoop::removeChannel(Channel* channel) {
     if (channel->ownerLoop() != this) {
         LOG_FATAL << "EventLoop::removeChannel() error!";
     }
+    // LOG_DEBUG << "assertInLoopThread() begin";
     assertInLoopThread();
     if (m_event_handling) {
+        LOG_DEBUG << "to be removed channel: " << channel << ", current active channel: " << m_current_active_channel;
         if (channel != m_current_active_channel
         || std::find(m_active_channels.begin(), m_active_channels.end(), channel) != m_active_channels.end()) {
             LOG_FATAL << "EventLoop::removeChannel() error!";

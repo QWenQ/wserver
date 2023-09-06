@@ -47,9 +47,11 @@ void init_routine() {
     g_asylog->start();
 }
 
-Logger::Logger(const std::string& basename, int line, Logger::LogLevel level) 
+Logger::Logger(const std::string& basename, int line, Logger::LogLevel level, const char* func) 
 :   m_impl(level, basename, line)
-{ }
+{ 
+    m_impl.m_stream << func << " ";
+}
 
 
 void defaultOutputFunc(const char* msg, size_t len) {

@@ -102,6 +102,7 @@ const std::unique_ptr<Timer>& TimerHeap::top() const {
 
 
 void TimerHeap::handleRead() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_ownerloop->assertInLoopThread();
     readTimerFd(m_timerfd);
     time_t now = ::time(NULL);

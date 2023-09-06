@@ -29,6 +29,7 @@ TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port)
 }
 
 TcpServer::~TcpServer() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_main_loop->assertInLoopThread();
     for (auto& it : m_connections) {
         TcpConnectionPtr conn = it.second;
@@ -38,15 +39,15 @@ TcpServer::~TcpServer() {
 }
 
 void TcpServer::newConnection(int fd) {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_main_loop->assertInLoopThread();
     char buf[32];
     snprintf(buf, sizeof(buf), "#conn-id: %d", m_next_conn_id);
     ++m_next_conn_id;
     std::string conn_name = m_name + buf;
     EventLoop* io_loop = m_pool_ptr->getNextLoop();
-    LOG_INFO << "TcpServer::newConnection [" << m_name
-                << "] - new connection [" << conn_name
-                << "]";
+    LOG_INFO << "server: " << m_name << "- new connection " << conn_name;
+
     TcpConnectionPtr conn(new TcpConnection(io_loop, conn_name, fd));
     m_connections[conn_name] = conn;
     conn->setConnectionCallback(m_conn_callback);
@@ -62,14 +63,12 @@ void TcpServer::removeConnection(const TcpConnectionPtr& connection) {
 }
 
 void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& connection) {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_main_loop->assertInLoopThread();
-    LOG_INFO << "TcpServer::removeConnectionInLoop ["
-                << m_name << "] - connection ["
-                << connection->getName() << "]";
+    LOG_INFO << "server: " << m_name << " - remove connection " << connection->getName();
     m_connections.erase(connection->getName());
     EventLoop* io_loop = connection->getLoop();
-    // io_loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, connection));
-    io_loop->runInLoop(std::bind(&TcpConnection::connectDestroyed, connection));
+    io_loop->queueInLoop(std::bind(&TcpConnection::connectDestroyed, connection));
 }
 
 void TcpServer::start() {

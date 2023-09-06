@@ -30,5 +30,8 @@ void HttpServer::onMessage(const TcpConnectionPtr& conn, Buffer* buf) {
     std::string http_response;
     context.getHttpResponseMessage(http_response);
     conn->send(http_response);
+    if (context.isClosed()) {
+        conn->shutdown();
+    }
     LOG_DEBUG << "HttpServer::onMessage() end";
 }

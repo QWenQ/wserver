@@ -26,7 +26,7 @@ class Logger {
     public:
         enum LogLevel { DEBUG, INFO, ERROR, FATAL };
 
-        Logger(const std::string& basename, int line, LogLevel level);
+        Logger(const std::string& basename, int line, LogLevel level, const char* func);
         ~Logger();
 
         static LogLevel logLevel();
@@ -70,10 +70,10 @@ inline void Logger::setLogLevel(Logger::LogLevel log_level) {
 
 
 #define LOG_DEBUG if (Logger::logLevel() <= Logger::DEBUG) \
-    Logger(__FILE__, __LINE__, Logger::LogLevel::DEBUG).stream()
+    Logger(__FILE__, __LINE__, Logger::LogLevel::DEBUG, __func__).stream()
 #define LOG_INFO if (Logger::logLevel() <= Logger::INFO) \
-    Logger(__FILE__, __LINE__, Logger::LogLevel::INFO).stream()
-#define LOG_ERROR Logger(__FILE__, __LINE__, Logger::LogLevel::ERROR).stream()
-#define LOG_FATAL Logger(__FILE__, __LINE__, Logger::LogLevel::FATAL).stream()
+    Logger(__FILE__, __LINE__, Logger::LogLevel::INFO, __func__).stream()
+#define LOG_ERROR Logger(__FILE__, __LINE__, Logger::LogLevel::ERROR, __func__).stream()
+#define LOG_FATAL Logger(__FILE__, __LINE__, Logger::LogLevel::FATAL, __func__).stream()
 
 #endif // LOGGING_H

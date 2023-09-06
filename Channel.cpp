@@ -18,7 +18,7 @@ Channel::~Channel() {
     if (m_event_handling == true) {
         LOG_ERROR << "Channel::~Channel() error!";
     }
-    remove();
+    // remove();
 }
 
 void Channel::update() {
@@ -123,6 +123,7 @@ bool Channel::isWriting() {
 }
 
 void Channel::remove() {
+    // // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     setIndex(kDeleted);
     m_loop->removeChannel(this);

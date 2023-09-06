@@ -16,6 +16,7 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop* loop)
 EventLoopThreadPool::~EventLoopThreadPool() { }
 
 void EventLoopThreadPool::start() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_base_loop->assertInLoopThread();
     m_started = true;
     for (int i = 0; i < m_thread_nums; ++i) {
@@ -26,6 +27,7 @@ void EventLoopThreadPool::start() {
 }
 
 EventLoop* EventLoopThreadPool::getNextLoop() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_base_loop->assertInLoopThread();
     // round-robin
     EventLoop* loop = m_loops[m_next];

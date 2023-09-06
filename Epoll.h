@@ -29,6 +29,7 @@ class Epoll : noncopyable {
         void removeChannel(Channel* channel);
 
         void assertInLoopThread() {
+            // LOG_DEBUG << "assertInLoopThread() begin";
             m_owner_loop->assertInLoopThread();
         }
 

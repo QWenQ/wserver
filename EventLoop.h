@@ -52,8 +52,8 @@ class EventLoop : noncopyable {
         void runAfter(time_t delay, const TimerCallBack& cb);
 
         // for task assignment to I/O threads
-        void runInLoop(const Functor& cb);
-        void queueInLoop(const Functor& cb);
+        void runInLoop(Functor cb);
+        void queueInLoop(Functor cb);
 
         void removeChannel(Channel* channel);
     private:

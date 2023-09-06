@@ -111,6 +111,7 @@ void Epoll::updateChannel(Channel* channel) {
 }
 
 void Epoll::removeChannel(Channel* channel) {
+    // LOG_DEBUG << "assertInLoopThread()";
     assertInLoopThread();
     int fd = channel->fd();
     if (m_channels.find(fd) != m_channels.end()

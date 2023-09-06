@@ -60,6 +60,7 @@ void TcpConnection::connectEstablished() {
 
 void TcpConnection::connectDestroyed() {
     LOG_DEBUG << "TcpConnection::connectDestroyed()";
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     if (m_state == kConnected) {
         setState(kDisconnected);
@@ -75,7 +76,6 @@ void TcpConnection::handleRead() {
     LOG_DEBUG << "read bytes " << bytes;
     if (bytes > 0) {
         m_message_callback(shared_from_this(), &m_input_buffer);
-        handleClose();
     }
     else if (bytes == 0) {
         handleClose();
@@ -87,6 +87,7 @@ void TcpConnection::handleRead() {
 }
 
 void TcpConnection::handleWrite() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     ssize_t bytes = m_output_buffer.writeToFd(m_socket_ptr->getFd());
     if (bytes > 0) {
@@ -104,18 +105,19 @@ void TcpConnection::handleWrite() {
 
 void TcpConnection::handleClose() {
     LOG_DEBUG << "TcpConnection::handleClose()";
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     LOG_DEBUG << "TcpConnection::handleClose() is called by loop " << m_loop;
-    if (m_state != kConnected) {
-        LOG_DEBUG << "state should be kConnected instead of " << stateToString();
-        LOG_FATAL << "TcpConnection::handleClose() error!";
+    if (m_state != kConnected && m_state != kDisconnecting) {
+        LOG_FATAL << "TcpConnection::handleClose(): state should be kConnected instead of " << stateToString();
     }
     setState(kDisconnected);
+    // unregister fd from epoll
+    m_channel->disableAll();
     // erase this connection from server's connection map
     TcpConnectionPtr guard_this(shared_from_this());
+    // call TcpServer::removeConnection()
     m_close_callback(guard_this);
-    // the dtor of class Socket will close socket fd
-    m_channel->disableAll();
 }
 
 int getSocketError(int fd) {
@@ -152,6 +154,7 @@ void TcpConnection::send(const std::string& message) {
 
 
 void TcpConnection::sendInLoop(const std::string& message) {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     if (m_state == kDisconnected) {
         LOG_ERROR << "disconnected, give up writing";
@@ -185,6 +188,7 @@ void TcpConnection::shutdown() {
 }
 
 void TcpConnection::shutdownInLoop() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
     if (!m_channel->isWriting()) {
         m_socket_ptr->shutdownWrite();

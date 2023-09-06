@@ -43,6 +43,7 @@ class HttpContext {
         void setStatusCode(HttpStatusCode code) { m_status_code = code; }
         void setStatusMessage(const std::string& msg) { m_status_message = msg; }
         void setCloseConnection(bool close) { m_close_connection = close; }
+        bool isClosed() const { return m_close_connection; }
 
         
 
