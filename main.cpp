@@ -3,7 +3,7 @@
 
 int main(int argc, char* argv[]) {
     // debug
-    Logger::setLogLevel(Logger::DEBUG);
+    Logger::setLogLevel(Logger::ERROR);
     EventLoop loop;
     HttpServer server(&loop);
     // debug
