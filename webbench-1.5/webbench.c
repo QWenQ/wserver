@@ -448,7 +448,7 @@ void benchcore(const char *host,const int port,const char *req)
             /* fprintf(stderr,"%d\n",i); */
             if(i<0) 
             { 
-               perror("read() error");
+               // perror("read() error");
                failed++;
                close(s);
                goto nexttry;
