@@ -242,13 +242,13 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
         msg += "HTTP/1.1 ";
     }
 
-    if (m_request_state == NO_REQUEST) {
-        // todo:
-        // need more request data
-        // register read event again 
-        return;
-    }
-    else if (m_request_state == GET_REQUEST) {
+    // if (m_request_state == NO_REQUEST) {
+    //     // todo:
+    //     // need more request data
+    //     // register read event again 
+    //     return;
+    // }
+    if (m_request_state == GET_REQUEST) {
         // todo: if status code is 200, set headers and body according to the URI info
         if (m_uri == "/") {
             // response status line
@@ -287,7 +287,7 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
             msg += "\r\n";
         }
     }
-    else if (m_request_state == BAD_REQUEST) {
+    else if (m_request_state == BAD_REQUEST || m_request_state == NO_REQUEST) {
         msg += "400 Bad Request\r\n";
         msg += "Connection: close\r\n";
         msg += "\r\n";

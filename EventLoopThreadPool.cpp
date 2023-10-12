@@ -2,7 +2,7 @@
 #include "EventLoop.h"
 #include "EventLoopThread.h"
 
-const int DEFAUTL_THREAD_NUMS = 6;
+const int DEFAUTL_THREAD_NUMS = 4;
 
 EventLoopThreadPool::EventLoopThreadPool(EventLoop* loop) 
 :   m_base_loop(loop),

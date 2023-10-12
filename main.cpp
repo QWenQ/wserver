@@ -7,7 +7,8 @@ int main(int argc, char* argv[]) {
     EventLoop loop;
     HttpServer server(&loop);
     // debug
-    server.setThreadNums(2);
+    // default thread nums == 4
+    // server.setThreadNums(2);
     server.start();
     loop.loop();
     return 0;
