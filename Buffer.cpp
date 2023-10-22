@@ -118,7 +118,7 @@ void Buffer::setContent(const std::string& request) {
         ++m_write_index;
     }
 }
-
+/*
 ssize_t Buffer::readFromFd(int fd) {
     char extrabuf[65536];
     struct iovec iovs[2];
@@ -128,6 +128,7 @@ ssize_t Buffer::readFromFd(int fd) {
     iovs[1].iov_base = extrabuf;
     iovs[1].iov_len = sizeof(extrabuf);
     int iovcnt = 2;
+    // in EPOLLET mode, read should not be end until read return -1 and errno equals EAGAIN or EWOULDBLOCK
     ssize_t bytes = ::readv(fd, iovs, iovcnt);
     // if m_buffer has enough space
     if (writable_bytes >= bytes) {
@@ -139,8 +140,45 @@ ssize_t Buffer::readFromFd(int fd) {
     }
     return bytes;
 }
+*/
 
+ssize_t Buffer::readFromFd(int fd) {
+    ssize_t all_bytes = 0;
+    while (true) {
+        char extrabuf[65536];
+        struct iovec iovs[2];
+        int writable_bytes = writableBytes();
+        iovs[0].iov_base = begin() + m_write_index;
+        iovs[0].iov_len = writable_bytes;
+        iovs[1].iov_base = extrabuf;
+        iovs[1].iov_len = sizeof(extrabuf);
+        int iovcnt = 2; 
+        ssize_t bytes = ::readv(fd, iovs, iovcnt);
+        if (bytes == -1) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
+            // todo: errno handle
+            else {
+                LOG_ERROR << "readv() error!";
+                break;
+            }
+        }
+        all_bytes += bytes;
+        if (writable_bytes >= bytes) {
+            m_write_index += bytes; 
+        }
+        else {
+            m_write_index = m_buffer.size();
+            append(extrabuf, bytes - writable_bytes);
+        }
+    }
+    return all_bytes;
+}
+
+/*
 ssize_t Buffer::writeToFd(int fd) {
+    // in EPOLLET mode, write should not be end until write return -1 and errno equals EAGAIN or EWOULDBLOCK
     ssize_t bytes = ::write(fd, readBegin(), readableBytes());
     if (bytes < 0) {
         LOG_ERROR << "Buffer::writeToFd() failed!";
@@ -154,6 +192,33 @@ ssize_t Buffer::writeToFd(int fd) {
         }
     }
     return bytes;
+}
+*/
+
+// todo: rewrite
+ssize_t Buffer::writeToFd(int fd) {
+    ssize_t all_bytes = 0;
+    while (true) {
+        ssize_t bytes = ::write(fd, readBegin(), readableBytes());
+        if (bytes < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                break;
+            }
+            else {
+                LOG_ERROR << "Buffer::writeToFd() failed!";
+                break;
+            }
+        }
+        else {
+            m_read_index += bytes;
+            all_bytes += bytes;
+            if (m_read_index == m_write_index) {
+                m_read_index = 0;
+                m_write_index = 0;
+            }
+        }
+    }
+    return all_bytes;
 }
 
 void Buffer::append(const char* msg, int len) {
