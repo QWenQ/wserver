@@ -9,7 +9,9 @@ int main(int argc, char* argv[]) {
     // debug
     // default thread nums == 4
     // server.setThreadNums(2);
+    // start threadpool and listen for new clients
     server.start();
+    // main loop starts working to allocate new clients to threadpool
     loop.loop();
     return 0;
 }

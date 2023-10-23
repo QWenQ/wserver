@@ -29,20 +29,35 @@ void Acceptor::listen() {
     m_accept_channel.enableReading();
 }
 
+// void Acceptor::handleRead() {
+//     // LOG_DEBUG << "assertInLoopThread() begin";
+//     m_loop->assertInLoopThread();
+//     int connfd = m_socket.accept();
+//     if (connfd >= 0) {
+//         LOG_DEBUG << "get new conn " << connfd;
+//         if (m_new_conn_callback) {
+//             m_new_conn_callback(connfd);
+//         }
+//         else {
+//             ::close(connfd);
+//         }
+//     }
+//     else {
+//         LOG_ERROR << "in Acceptor::handleRead";
+//     }
+// }
+
 void Acceptor::handleRead() {
-    // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
-    int connfd = m_socket.accept();
-    if (connfd >= 0) {
-        LOG_DEBUG << "get new conn " << connfd;
+    while (true) {
+        int connfd = m_socket.accept();
+        if (connfd < 0) break;
+        LOG_DEBUG << "get new conn" << connfd;
         if (m_new_conn_callback) {
             m_new_conn_callback(connfd);
         }
         else {
             ::close(connfd);
         }
-    }
-    else {
-        LOG_ERROR << "in Acceptor::handleRead";
     }
 }

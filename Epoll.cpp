@@ -137,9 +137,6 @@ void Epoll::update(int operation, Channel* channel) {
     memset(&event, 0, sizeof(event));
     event.data.ptr = channel;
     event.events = channel->events();  
-    if (operation == EPOLL_CTL_ADD || operation == EPOLL_CTL_MOD) {
-        event.events |= EPOLLET;
-    }
     int ret = ::epoll_ctl(m_epollfd, operation, fd, &event);
     if (operation == EPOLL_CTL_DEL) {
         LOG_DEBUG << "remove fd " << fd << " from epoll " << m_epollfd;

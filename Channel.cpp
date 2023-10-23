@@ -3,8 +3,8 @@
 #include "base/Logging.h"
 
 const int Channel::kNoneEvent = 0;
-const int Channel::kReadEvent = EPOLLIN | EPOLLPRI;
-const int Channel::kWriteEvent = EPOLLOUT;
+const int Channel::kReadEvent = EPOLLIN | EPOLLPRI | EPOLLET;
+const int Channel::kWriteEvent = EPOLLOUT | EPOLLET;
 
 Channel::Channel(EventLoop* loop, int fd)
 :   m_loop(loop),

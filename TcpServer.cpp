@@ -73,7 +73,9 @@ void TcpServer::removeConnectionInLoop(const TcpConnectionPtr& connection) {
 
 void TcpServer::start() {
     m_started = true;
+    // start working threads
     m_pool_ptr->start();
+    // get new client sockets from the web
     m_main_loop->runInLoop(std::bind(&Acceptor::listen, m_acceptor_ptr.get())); 
 }
 
