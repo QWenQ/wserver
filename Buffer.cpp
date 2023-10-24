@@ -142,36 +142,54 @@ ssize_t Buffer::readFromFd(int fd) {
 }
 */
 
+// ssize_t Buffer::readFromFd(int fd) {
+//     ssize_t all_bytes = 0;
+//     while (true) {
+//         char extrabuf[65536];
+//         struct iovec iovs[2];
+//         int writable_bytes = writableBytes();
+//         iovs[0].iov_base = begin() + m_write_index;
+//         iovs[0].iov_len = writable_bytes;
+//         iovs[1].iov_base = extrabuf;
+//         iovs[1].iov_len = sizeof(extrabuf);
+//         int iovcnt = 2; 
+//         ssize_t bytes = ::readv(fd, iovs, iovcnt);
+//         if (bytes == -1) {
+//             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+//                 break;
+//             }
+//             // todo: errno handle
+//             else {
+//                 LOG_ERROR << "readv() error!";
+//                 break;
+//             }
+//         }
+//         all_bytes += bytes;
+//         if (writable_bytes >= bytes) {
+//             m_write_index += bytes; 
+//         }
+//         else {
+//             m_write_index = m_buffer.size();
+//             append(extrabuf, bytes - writable_bytes);
+//         }
+//     }
+//     return all_bytes;
+// }
+
 ssize_t Buffer::readFromFd(int fd) {
     ssize_t all_bytes = 0;
     while (true) {
-        char extrabuf[65536];
-        struct iovec iovs[2];
-        int writable_bytes = writableBytes();
-        iovs[0].iov_base = begin() + m_write_index;
-        iovs[0].iov_len = writable_bytes;
-        iovs[1].iov_base = extrabuf;
-        iovs[1].iov_len = sizeof(extrabuf);
-        int iovcnt = 2; 
-        ssize_t bytes = ::readv(fd, iovs, iovcnt);
-        if (bytes == -1) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                break;
+        char tmp[1024];
+        ssize_t bytes = ::read(fd, tmp, 1024);
+        if (bytes < 0) {
+            if (errno == EINTR) continue;
+            else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                LOG_ERROR << "read() error!";
             }
-            // todo: errno handle
-            else {
-                LOG_ERROR << "readv() error!";
-                break;
-            }
+            break;
         }
         all_bytes += bytes;
-        if (writable_bytes >= bytes) {
-            m_write_index += bytes; 
-        }
-        else {
-            m_write_index = m_buffer.size();
-            append(extrabuf, bytes - writable_bytes);
-        }
+        append(tmp, bytes);
     }
     return all_bytes;
 }
@@ -195,7 +213,6 @@ ssize_t Buffer::writeToFd(int fd) {
 }
 */
 
-// todo: rewrite
 ssize_t Buffer::writeToFd(int fd) {
     ssize_t all_bytes = 0;
     while (true) {

@@ -26,10 +26,13 @@ Socket::Socket() {
     m_closed = false;
 }
 
+// used for client socket fd
 Socket::Socket(int fd, bool closed) 
 :   m_sockfd(fd),
     m_closed(closed)
-{ }
+{
+    setNonBlock(true);
+}
 
 Socket::~Socket() {
     LOG_DEBUG << "Socket::~Socket()";
@@ -94,6 +97,7 @@ void Socket::shutdownWrite() {
     // shutdown() will close the socket immediately in the spcified way 
     // instead of decreasing the reference count of the socket like close()
     if (::shutdown(m_sockfd, SHUT_WR) < 0) {
+        perror("::shutdown() failed!");
         LOG_ERROR << "Socket::shutdownWrite failed!";
     }
 }
@@ -114,11 +118,22 @@ void Socket::setTcpKeepAlive(bool on) {
     }
 }
 
+// void Socket::setNonBlock(bool on) {
+//     int optval = on ? 1 : 0;
+//     int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SOCK_NONBLOCK, &optval, sizeof(optval));
+//     if (ret < 0) {
+//         perror("set socket non-blocked failed");
+//         LOG_ERROR << "SOCK_NONBLOCK failed!";
+//     }
+// }
+
 void Socket::setNonBlock(bool on) {
-    int optval = on ? 1 : 0;
-    int ret = ::setsockopt(m_sockfd, SOL_SOCKET, SOCK_NONBLOCK, &optval, sizeof(optval));
+    int old_option = ::fcntl(m_sockfd, F_GETFL);
+    int new_option = old_option | O_NONBLOCK;
+    int ret = ::fcntl(m_sockfd, F_SETFL, new_option);
     if (ret < 0) {
-        LOG_ERROR << "SOCK_NONBLOCK failed!";
+        perror("set socket non-blocking failed!");
+        LOG_ERROR << "set socket non-blocking failed!";
     }
 }
 

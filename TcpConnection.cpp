@@ -21,7 +21,7 @@ TcpConnection::TcpConnection(EventLoop* loop, std::string name, int sockfd)
     m_channel->setCloseHandler(std::bind(&TcpConnection::handleClose, this));
     LOG_INFO << "TcpConnection::ctor[" << m_name << "] at" << this << " fd = " << sockfd;
     // create a long tcp connection
-    setTcpKeepAlive(true);
+    // setTcpKeepAlive(true);
 }
 
 TcpConnection::~TcpConnection() {

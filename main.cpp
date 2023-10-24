@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
     HttpServer server(&loop);
     // debug
     // default thread nums == 4
-    // server.setThreadNums(2);
+    server.setThreadNums(2);
     // start threadpool and listen for new clients
     server.start();
     // main loop starts working to allocate new clients to threadpool
