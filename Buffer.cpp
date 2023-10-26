@@ -1,5 +1,7 @@
 #include <unistd.h>
 #include <sys/uio.h>
+#include <unistd.h>
+#include <fcntl.h>
 #include "Buffer.h"
 #include "base/Logging.h"
 
@@ -76,6 +78,7 @@ void Buffer::append(const std::string& msg) {
     }
     std::copy(msg.begin(), msg.end(), m_buffer.begin() + m_write_index);
 }
+
 
 void Buffer::write() {
     // todo
@@ -181,11 +184,18 @@ ssize_t Buffer::readFromFd(int fd) {
     while (true) {
         char tmp[1024];
         ssize_t bytes = ::read(fd, tmp, 1024);
+        // if (bytes == -1) printf("::read() return -1\n");
         if (bytes < 0) {
             if (errno == EINTR) continue;
             else if (errno != EAGAIN && errno != EWOULDBLOCK) {
                 LOG_ERROR << "read() error!";
+                all_bytes = bytes;
             }
+            break;
+        }
+        else if (bytes == 0) {
+            // the peer close the connection
+            all_bytes = 0;
             break;
         }
         all_bytes += bytes;
@@ -218,21 +228,26 @@ ssize_t Buffer::writeToFd(int fd) {
     while (true) {
         ssize_t bytes = ::write(fd, readBegin(), readableBytes());
         if (bytes < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                break;
+            // write to socket buffer until socket buffer is full
+            if (errno == EINTR) continue;
+            else if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                LOG_ERROR << "write() error!";
+                all_bytes = bytes;
             }
-            else {
-                LOG_ERROR << "Buffer::writeToFd() failed!";
-                break;
-            }
+            break;
         }
-        else {
+        else if (bytes > 0) {
             m_read_index += bytes;
             all_bytes += bytes;
             if (m_read_index == m_write_index) {
                 m_read_index = 0;
                 m_write_index = 0;
             }
+        }
+        else if (bytes == 0) {
+            // the peer closed the connection
+            all_bytes = 0;
+            break;
         }
     }
     return all_bytes;

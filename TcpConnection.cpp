@@ -6,6 +6,7 @@
 #include "Channel.h"
 #include "base/Logging.h"
 
+
 TcpConnection::TcpConnection(EventLoop* loop, std::string name, int sockfd) 
 :   m_loop(loop),
     m_name(name),
@@ -13,7 +14,8 @@ TcpConnection::TcpConnection(EventLoop* loop, std::string name, int sockfd)
     m_socket_ptr(new Socket(sockfd)),
     m_channel(new Channel(m_loop, sockfd)),
     m_input_buffer(),
-    m_output_buffer()
+    m_output_buffer(),
+    m_context(new HttpContext(&m_input_buffer, &m_output_buffer))
 {
     m_channel->setReadHandler(std::bind(&TcpConnection::handleRead, this));
     m_channel->setWriteHandler(std::bind(&TcpConnection::handleWrite, this));
@@ -72,36 +74,58 @@ void TcpConnection::connectDestroyed() {
 void TcpConnection::handleRead() {
     LOG_DEBUG << "TcpConnection::handleRead()";
     int sockfd = m_socket_ptr->getFd();
+
     ssize_t bytes = m_input_buffer.readFromFd(sockfd);
     LOG_DEBUG << "read bytes " << bytes;
     if (bytes > 0) {
-        m_message_callback(shared_from_this(), &m_input_buffer);
+        // m_message_callback(shared_from_this());
+        handleHttpRequest();
+        handleWrite();
     }
     else if (bytes == 0) {
         handleClose();
     }
-    else {
-        LOG_ERROR << "TcpConnection::handleRead";
+    else if (bytes < 0) {
+        LOG_ERROR << "bytes get -1";
         handleError();
     }
 }
 
+// void TcpConnection::handleWrite() {
+//     // LOG_DEBUG << "assertInLoopThread() begin";
+//     m_loop->assertInLoopThread();
+//     ssize_t bytes = m_output_buffer.writeToFd(m_socket_ptr->getFd());
+//     if (bytes > 0) {
+//         if (m_output_buffer.readableBytes() == 0) {
+//             m_channel->disableWriting();
+//             if (m_state == kDisconnecting) {
+//                 shutdownInLoop();
+//             }
+//         }
+//     }
+//     else {
+//         LOG_ERROR << "TcpConnection::handleWrite";
+//     }
+// }
+
+// todo: rewrite handleWrite()
 void TcpConnection::handleWrite() {
-    // LOG_DEBUG << "assertInLoopThread() begin";
-    m_loop->assertInLoopThread();
-    ssize_t bytes = m_output_buffer.writeToFd(m_socket_ptr->getFd());
-    if (bytes > 0) {
-        if (m_output_buffer.readableBytes() == 0) {
-            m_channel->disableWriting();
-            if (m_state == kDisconnecting) {
-                shutdownInLoop();
-            }
-        }
+    // write back reponse data to the client    
+    int sockfd = m_socket_ptr->getFd();
+    ssize_t bytes = m_output_buffer.writeToFd(sockfd);
+    if (bytes < 0) {
+        LOG_ERROR << "bytes get -1";
+        handleError();
     }
-    else {
-        LOG_ERROR << "TcpConnection::handleWrite";
+    else if (bytes == 0) {
+        handleClose();
+    }
+    // if any byte of the response is left, update the socket fd with EPOLLOUT event in its epoll
+    if (m_output_buffer.readableBytes() > 0) {
+        m_channel->enableWriting(); 
     }
 }
+
 
 void TcpConnection::handleClose() {
     LOG_DEBUG << "TcpConnection::handleClose()";
@@ -138,47 +162,60 @@ void TcpConnection::handleError() {
 
     LOG_ERROR << "TcpConnection::handleError [" << m_name 
                 << "] - SO_ERROR = " << err << " " << err_str;
+    // close the error connection
+    handleClose();
+}
+
+void TcpConnection::handleHttpRequest() {
+    m_context->work();
 }
 
 
-void TcpConnection::send(const std::string& message) {
-    if (m_state == kConnected) {
-        if (m_loop->isInLoopThread()) {
-            sendInLoop(std::move(message)); 
-        }
-        else {
-            m_loop->runInLoop(std::bind(&TcpConnection::sendInLoop, shared_from_this(), std::move(message)));
-        }
-    }
-}
+// copy response into write buffer and update fd with write event in epoll
+// void TcpConnection::send(const std::string& response) {
+//     if (m_state == kConnected) {
+//         if (m_loop->isInLoopThread()) {
+//             sendInLoop(std::move(response)); 
+//         }
+//         else {
+//             m_loop->runInLoop(std::bind(&TcpConnection::sendInLoop, shared_from_this(), std::move(response)));
+//         }
+//     }
+// }
 
 
-void TcpConnection::sendInLoop(const std::string& message) {
-    // LOG_DEBUG << "assertInLoopThread() begin";
-    m_loop->assertInLoopThread();
-    if (m_state == kDisconnected) {
-        LOG_ERROR << "disconnected, give up writing";
-        return;
-    }
-    ssize_t bytes = 0;
-    if (!m_channel->isWriting() || m_output_buffer.readableBytes() != 0) {
-        bytes = ::write(m_socket_ptr->getFd(), message.data(), message.size());
-        if (bytes < 0) {
-            if (errno != EWOULDBLOCK) {
-                LOG_ERROR << "TcpConnection::sendInLoop";
-            }
-        }
-    }
+// void TcpConnection::sendInLoop(const std::string& response) {
+//     // LOG_DEBUG << "assertInLoopThread() begin";
+//     m_loop->assertInLoopThread();
+//     if (m_state == kDisconnected) {
+//         LOG_ERROR << "disconnected, give up writing";
+//         return;
+//     }
+//     ssize_t bytes = 0;
+//     if (!m_channel->isWriting() || m_output_buffer.readableBytes() != 0) {
+//         bytes = ::write(m_socket_ptr->getFd(), response.data(), response.size());
+//         if (bytes < 0) {
+//             if (errno != EWOULDBLOCK) {
+//                 LOG_ERROR << "TcpConnection::sendInLoop";
+//             }
+//         }
+//     }
 
-    // if not all data has been transferred by the write(), save it to the output buffer
-    if (static_cast<std::string::size_type>(bytes) < message.size()) {
-        m_output_buffer.append(message.substr(bytes));
-        // register EPOLLOUT event to send the rest data
-        if (!m_channel->isWriting()) {
-            m_channel->enableWriting();
-        }
-    }
-}
+//     // if not all data has been transferred by the write(), save it to the output buffer
+//     if (static_cast<std::string::size_type>(bytes) < message.size()) {
+//         m_output_buffer.append(message.substr(bytes));
+//         // register EPOLLOUT event to send the rest data
+//         if (!m_channel->isWriting()) {
+//             m_channel->enableWriting();
+//         }
+//     }
+// }
+
+// save the data of the response into output buffer and write back
+// void TcpConnection::sendInLoop(const std::string& response) {
+//     m_output_buffer.append(response.data(), response.size());
+//     handleWrite();
+// }
 
 void TcpConnection::shutdown() {
     if (m_state == kConnected) {

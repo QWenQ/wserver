@@ -19,7 +19,7 @@ typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 
 typedef std::function<void (const TcpConnectionPtr&)> ConnectionCallback;
 typedef std::function<void (const TcpConnectionPtr&)> CloseCallback;
-typedef std::function<void (const TcpConnectionPtr&, Buffer*)> MessageCallback;
+typedef std::function<void (const TcpConnectionPtr&)> MessageCallback;
 
 class TcpServer : noncopyable {
     public:
@@ -29,8 +29,8 @@ class TcpServer : noncopyable {
         // start the server
         void start();
 
-        void setConnectionCallback(const ConnectionCallback& cb) { m_conn_callback = cb; }
-        void setMessageCallback(const MessageCallback& cb) { m_message_callback = cb; }
+        // void setConnectionCallback(const ConnectionCallback& cb) { m_conn_callback = cb; }
+        // void setMessageCallback(const MessageCallback& cb) { m_message_callback = cb; }
 
 
         void setThreadNums(int nums);
@@ -51,9 +51,9 @@ class TcpServer : noncopyable {
         std::unique_ptr<Acceptor> m_acceptor_ptr;
         std::unique_ptr<EventLoopThreadPool> m_pool_ptr;
         // get info of client, set by the user
-        ConnectionCallback m_conn_callback;
+        // ConnectionCallback m_conn_callback;
         // parse the info of client, set by the user
-        MessageCallback m_message_callback;
+        // MessageCallback m_message_callback;
         bool m_started;
         int m_next_conn_id;
         ConnectionMap m_connections;

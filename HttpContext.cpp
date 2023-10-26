@@ -77,7 +77,7 @@ char favicon[555] = {
 };
 
 
-HttpContext::HttpContext(Buffer* buffer)
+HttpContext::HttpContext(Buffer* input_buffer, Buffer* output_buffer)
 :   m_close_connection(true),
     m_method(GET), 
     m_version(HTTP_1_0),
@@ -86,13 +86,24 @@ HttpContext::HttpContext(Buffer* buffer)
     m_check_state(CHECK_STATE_REQUEST_LINE), 
     m_uri(),
     m_new_line(),
-    m_buffer(buffer)
+    m_input_buffer(input_buffer),
+    m_output_buffer(output_buffer)
 { }
 
 HttpContext::~HttpContext() { }
 
+void HttpContext::work() {
+    // parse the requeset data in input buffer
+    handleHttpRequest();
+    if (m_request_state == NO_REQUEST) {
+        // more http request data needed, EPOLLIN event is expected
+    }
+    // get the response data and append it into output buffer
+    getHttpResponse();
+}
+
 LINE_STATE HttpContext::parseLine() {
-    m_new_line = m_buffer->getAnHTTPLine();
+    m_new_line = m_input_buffer->getAnHTTPLine();
     for (std::size_t i = 0; i < m_new_line.size(); ++i) {
         if (m_new_line[i] == '\r' && i + 1 < m_new_line.size()) {
             // a complete http line must be end up with "\r\n"
@@ -234,12 +245,13 @@ void HttpContext::parseMessageBody() {
     m_request_state = GET_REQUEST;
 }
 
-void HttpContext::getHttpResponseMessage(std::string& msg) {
+void HttpContext::getHttpResponse() {
+    std::string response;
     if (m_version == HTTP_1_0) {
-        msg += "HTTP/1.0 ";
+        response += "HTTP/1.0 ";
     }
     else {
-        msg += "HTTP/1.1 ";
+        response += "HTTP/1.1 ";
     }
 
     // if (m_request_state == NO_REQUEST) {
@@ -252,53 +264,53 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
         // todo: if status code is 200, set headers and body according to the URI info
         if (m_uri == "/") {
             // response status line
-            msg += "200 OK\r\n";
+            response += "200 OK\r\n";
             // response headers
-            msg += "Content-Type: text/html\r\n";
-            msg += "Header: QWQ-SERVER\r\n"; 
-            msg += "Connection: close\r\n";
-            msg += "\r\n";
+            response += "Content-Type: text/html\r\n";
+            response += "Header: QWQ-SERVER\r\n"; 
+            response += "Connection: close\r\n";
+            response += "\r\n";
             // response body
             std::string now = timeStamp();
-            msg += "<html><head><title>This is title</title></head><body><h1>Hello</h1>Now is ";
-            msg += now;
-            msg += "</body></html>";
+            response += "<html><head><title>This is title</title></head><body><h1>Hello</h1>Now is ";
+            response += now;
+            response += "</body></html>";
         }
         else if (m_uri == "/favicon.ico") {
-            msg += "200 OK\r\n";
-            msg += "Content-Type: image/png\r\n";
-            msg += "Connection: close\r\n";
-            msg += "Header: QWQ-SERVER\r\n"; 
-            msg += "\r\n";
-            msg += std::string(favicon);
+            response += "200 OK\r\n";
+            response += "Content-Type: image/png\r\n";
+            response += "Connection: close\r\n";
+            response += "Header: QWQ-SERVER\r\n"; 
+            response += "\r\n";
+            response += std::string(favicon);
         }
         else if (m_uri == "/hello") {
-            msg += "200 OK\r\n";
-            msg += "Content-Type: text/plain\r\n";
-            msg += "Connection: close\r\n";
-            msg += "Header: QWQ-SERVER\r\n"; 
-            msg += "\r\n";
-            msg += "<html><head>";
-            msg += "hello, world!\n";
-            msg += "</head></html>";
+            response += "200 OK\r\n";
+            response += "Content-Type: text/plain\r\n";
+            response += "Connection: close\r\n";
+            response += "Header: QWQ-SERVER\r\n"; 
+            response += "\r\n";
+            response += "<html><head>";
+            response += "hello, world!\n";
+            response += "</head></html>";
         }
         else {
-            msg += "404 Not Found\r\n";
-            msg += "\r\n";
+            response += "404 Not Found\r\n";
+            response += "\r\n";
         }
     }
     else if (m_request_state == BAD_REQUEST || m_request_state == NO_REQUEST) {
-        msg += "400 Bad Request\r\n";
-        msg += "Connection: close\r\n";
-        msg += "\r\n";
+        response += "400 Bad Request\r\n";
+        response += "Connection: close\r\n";
+        response += "\r\n";
     }
     else if (m_request_state == FORBIDDEN_REQUEST) {
-        msg += "403 Forbidden Error\r\n";
-        msg += "\r\n";
+        response += "403 Forbidden Error\r\n";
+        response += "\r\n";
     }
     else if (m_request_state == INTERNAL_ERROR) {
-        msg += "500 Internal Server Error\r\n";
-        msg += "\r\n";
+        response += "500 Internal Server Error\r\n";
+        response += "\r\n";
     }
     else if (m_request_state == CLOSED_CONNECTION) {
         // todo
@@ -307,4 +319,6 @@ void HttpContext::getHttpResponseMessage(std::string& msg) {
     else {
         // more states
     }
+
+    m_output_buffer->append(response.data(), response.size());
 }

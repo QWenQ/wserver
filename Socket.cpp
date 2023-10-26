@@ -128,12 +128,15 @@ void Socket::setTcpKeepAlive(bool on) {
 // }
 
 void Socket::setNonBlock(bool on) {
-    int old_option = ::fcntl(m_sockfd, F_GETFL);
-    int new_option = old_option | O_NONBLOCK;
-    int ret = ::fcntl(m_sockfd, F_SETFL, new_option);
+    int old_option = ::fcntl(m_sockfd, F_GETFL, 0);
+    if (old_option < 0) {
+        perror("get status of socket failed");
+        LOG_ERROR << "::fcntl(F_GETFL) failed!";
+    }
+    int ret = ::fcntl(m_sockfd, F_SETFL, old_option | O_NONBLOCK);
     if (ret < 0) {
         perror("set socket non-blocking failed!");
-        LOG_ERROR << "set socket non-blocking failed!";
+        LOG_ERROR << "::fcntl(F_SETFL, O_NONBLOCK) failed";
     }
 }
 

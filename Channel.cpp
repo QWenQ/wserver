@@ -94,7 +94,7 @@ void Channel::setCloseHandler(const Callback& close_handler) {
 }
 
 void Channel::enableReading() {
-    m_events |= kReadEvent;
+    m_events = kReadEvent;
     update();
 }
 
@@ -109,7 +109,7 @@ void Channel::disableAll() {
 }
 
 void Channel::enableWriting() {
-    m_events |= kWriteEvent;
+    m_events = kWriteEvent;
     update();
 }
 
@@ -127,4 +127,8 @@ void Channel::remove() {
     m_loop->assertInLoopThread();
     setIndex(kDeleted);
     m_loop->removeChannel(this);
+}
+
+bool Channel::isETMode() const {
+    return m_events & EPOLLET;
 }

@@ -10,17 +10,17 @@ void defaultConnectionCallback(const TcpConnectionPtr& conn) {
     LOG_INFO << "Server: " << conn->getName() << " build a new connection./n";
 }
 
-void defaultMessageCallback(const TcpConnectionPtr& conn, Buffer* buf) {
-    buf->retrieveAll();
+// handle requests
+void defaultMessageCallback(const TcpConnectionPtr& conn) {
+    conn->handleHttpRequest();
 }
+
 
 TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port) 
 :   m_main_loop(loop),
     m_name(name),
     m_acceptor_ptr(new Acceptor(m_main_loop, reuse_port)),
     m_pool_ptr(new EventLoopThreadPool(m_main_loop)),
-    m_conn_callback(defaultConnectionCallback),
-    m_message_callback(defaultMessageCallback),
     m_started(false),
     m_next_conn_id(1),
     m_connections()
@@ -50,8 +50,8 @@ void TcpServer::newConnection(int fd) {
 
     TcpConnectionPtr conn(new TcpConnection(io_loop, conn_name, fd));
     m_connections[conn_name] = conn;
-    conn->setConnectionCallback(m_conn_callback);
-    conn->setMessageCallback(m_message_callback);
+    // conn->setConnectionCallback(defaultConnectionCallback);
+    // conn->setMessageCallback(defaultMessageCallback);
     conn->setCloseCallback(
         std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
     io_loop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn.get()));

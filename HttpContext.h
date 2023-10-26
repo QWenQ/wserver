@@ -31,11 +31,11 @@ class HttpContext {
         };
 
 
-        HttpContext(Buffer* buffer);
+        HttpContext(Buffer* input_buffer, Buffer* output_buffer);
         ~HttpContext();
 
         void handleHttpRequest();
-        void getHttpResponseMessage(std::string& msg);
+        void getHttpResponse();
 
         bool isLongConnection() const { return m_connection == KEEP_ALIVE; }
 
@@ -46,13 +46,13 @@ class HttpContext {
         bool isClosed() const { return m_close_connection; }
 
         
-
-        // debug:
         METHOD getMethod() const { return m_method; }
         HTTP_VERSION getVersion() const { return m_version; }
         CONNECTION getConnection() const { return m_connection; }
         std::string getURI() const { return m_uri; }
         CHECK_STATE getParseResult() const { return m_check_state; }
+
+        void work();
 
 
     private:
@@ -74,8 +74,10 @@ class HttpContext {
         CHECK_STATE m_check_state;
         std::string m_uri;
         std::string m_new_line;
-        // buffer contain http request data
-        Buffer* m_buffer;
+        // buffer for reading the http request from the client
+        Buffer* m_input_buffer;
+        // buffer for writing back the http response to the client
+        Buffer* m_output_buffer;
 }; // class HttpContext
 
 #endif // HTTP_CONTEXT_H

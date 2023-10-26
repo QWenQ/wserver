@@ -1,6 +1,6 @@
 TARGET = http_server
 SOURCES = main.cpp Acceptor.cpp Buffer.cpp Channel.cpp Epoll.cpp EventLoop.cpp EventLoopThread.cpp \
-	  EventLoopThreadPool.cpp HttpContext.cpp HttpServer.cpp Socket.cpp TcpConnection.cpp \
+	  EventLoopThreadPool.cpp HttpContext.cpp Socket.cpp TcpConnection.cpp \
 	  TcpServer.cpp Thread.cpp TimerHeap.cpp \
 	  base/AsyncLog.cpp base/CountDownLatch.cpp base/CurrentThread.cpp base/FileUtil.cpp \
 	  base/LogFile.cpp base/LogStream.cpp base/Logging.cpp base/timeUtils.cpp

@@ -6,6 +6,7 @@
 
 #include "Buffer.h"
 #include "base/noncopyable.h"
+#include "HttpContext.h"
 
 class Socket;
 class EventLoop;
@@ -17,7 +18,7 @@ typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 
 typedef std::function<void (const TcpConnectionPtr&)> ConnectionCallback;
 typedef std::function<void (const TcpConnectionPtr&)> CloseCallback;
-typedef std::function<void (const TcpConnectionPtr&, Buffer*)> MessageCallback;
+typedef std::function<void (const TcpConnectionPtr&)> MessageCallback;
 
 
 /*class TcpConnection: encapsulation for a tcp connection and it's unreused*/
@@ -41,7 +42,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
 
         const std::string& getName() const { return m_name; }
 
-        void send(const std::string& message);
+        // void send(const std::string& message);
         void shutdown();
 
         void setTcpNoDelay(bool on);
@@ -51,6 +52,8 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         
         std::string stateToString() const;
 
+        void handleHttpRequest();
+        
 
     private:
         enum StateE { kConnecting, kConnected, kDisconnected, kDisconnecting };
@@ -59,7 +62,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         void handleWrite();
         void handleClose();
         void handleError();
-        void sendInLoop(const std::string& message);
+        // void sendInLoop(const std::string& message);
         void shutdownInLoop();
 
         // accptor loop
@@ -72,6 +75,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         std::unique_ptr<Channel> m_channel;
         Buffer m_input_buffer;
         Buffer m_output_buffer;
+        std::unique_ptr<HttpContext> m_context;
         // ???build a new connnection
         ConnectionCallback m_conn_callback;
         // ???deal with info from client, the call back is set by the user

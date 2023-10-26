@@ -21,6 +21,7 @@ class Buffer {
         void read();
 
         void append(const std::string& msg);
+        void append(const char* msg, int len);
         void write();
 
         std::string getAnHTTPLine();
@@ -30,7 +31,6 @@ class Buffer {
         int writableBytes() const { return m_buffer.size() - m_write_index; }
         int preWritableBytes() const { return m_read_index; }
         int readableBytes() const { return m_write_index - m_read_index; }
-        void append(const char* msg, int len);
         void ensureEnoughSpace(int len);
         void retrieveAll();
  
