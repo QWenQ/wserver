@@ -15,14 +15,10 @@ class Buffer {
     public:
         const static std::size_t INITTIAL_SIZE = 1024;
         Buffer();
-        Buffer(int fd);
         ~Buffer();
-
-        void read();
 
         void append(const std::string& msg);
         void append(const char* msg, int len);
-        void write();
 
         std::string getAnHTTPLine();
 
@@ -35,7 +31,7 @@ class Buffer {
         void retrieveAll();
  
 
-        // debug:
+        // debug for client
         void setContent(const std::string& request);
 
     private:

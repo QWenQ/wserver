@@ -6,16 +6,6 @@
 #include "EventLoopThreadPool.h"
 #include "base/Logging.h"
 
-void defaultConnectionCallback(const TcpConnectionPtr& conn) {
-    LOG_INFO << "Server: " << conn->getName() << " build a new connection./n";
-}
-
-// handle requests
-void defaultMessageCallback(const TcpConnectionPtr& conn) {
-    conn->handleHttpRequest();
-}
-
-
 TcpServer::TcpServer(EventLoop* loop, const std::string& name, bool reuse_port) 
 :   m_main_loop(loop),
     m_name(name),
@@ -50,8 +40,6 @@ void TcpServer::newConnection(int fd) {
 
     TcpConnectionPtr conn(new TcpConnection(io_loop, conn_name, fd));
     m_connections[conn_name] = conn;
-    // conn->setConnectionCallback(defaultConnectionCallback);
-    // conn->setMessageCallback(defaultMessageCallback);
     conn->setCloseCallback(
         std::bind(&TcpServer::removeConnection, this, std::placeholders::_1));
     io_loop->runInLoop(std::bind(&TcpConnection::connectEstablished, conn.get()));
@@ -78,7 +66,6 @@ void TcpServer::start() {
     // get new client sockets from the web
     m_main_loop->runInLoop(std::bind(&Acceptor::listen, m_acceptor_ptr.get())); 
 }
-
 
 void TcpServer::setThreadNums(int nums) {
     m_pool_ptr->setThreadNums(nums);

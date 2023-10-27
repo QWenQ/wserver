@@ -9,6 +9,7 @@ class EventLoop;
 
 class TimerHeap {
     public:
+        static const int defaultTimeDelay;
         typedef std::vector<std::unique_ptr<Timer>> TimerList;
         typedef std::function<void()> CallBack;
 
@@ -26,6 +27,7 @@ class TimerHeap {
         void percolateUp(int index);
 
         void addTimerInLoop(CallBack cb, time_t delay);
+
 
         EventLoop* m_ownerloop;
         const int m_timerfd;

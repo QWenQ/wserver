@@ -16,10 +16,7 @@ class TcpConnection;
 
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 
-typedef std::function<void (const TcpConnectionPtr&)> ConnectionCallback;
 typedef std::function<void (const TcpConnectionPtr&)> CloseCallback;
-typedef std::function<void (const TcpConnectionPtr&)> MessageCallback;
-
 
 /*class TcpConnection: encapsulation for a tcp connection and it's unreused*/
 class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnection>
@@ -31,9 +28,6 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
 
         // internal use only for class TcpServer
         void setCloseCallback(const CloseCallback& cb) { m_close_callback = cb; }
-
-        void setConnectionCallback(const ConnectionCallback& cb) { m_conn_callback = cb; }
-        void setMessageCallback(const MessageCallback& cb) { m_message_callback = cb; }
         
         // called when TcpServer accepts a new connection and called only once for one connection
         void connectEstablished();
@@ -53,7 +47,7 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         std::string stateToString() const;
 
         void handleHttpRequest();
-        
+
 
     private:
         enum StateE { kConnecting, kConnected, kDisconnected, kDisconnecting };
@@ -64,6 +58,9 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         void handleError();
         // void sendInLoop(const std::string& message);
         void shutdownInLoop();
+
+        void closeLongConnection();
+
 
         // accptor loop
         EventLoop* m_loop;
@@ -76,10 +73,8 @@ class TcpConnection : noncopyable, public std::enable_shared_from_this<TcpConnec
         Buffer m_input_buffer;
         Buffer m_output_buffer;
         std::unique_ptr<HttpContext> m_context;
-        // ???build a new connnection
-        ConnectionCallback m_conn_callback;
-        // ???deal with info from client, the call back is set by the user
-        MessageCallback m_message_callback;
+        bool m_alive;
+        bool m_timeout;
         // close callback is bound to TcpServer::removeConnection()
         CloseCallback m_close_callback;
 }; // class TcpConnection

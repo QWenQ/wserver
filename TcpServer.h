@@ -17,9 +17,9 @@ class Acceptor;
 
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
 
-typedef std::function<void (const TcpConnectionPtr&)> ConnectionCallback;
-typedef std::function<void (const TcpConnectionPtr&)> CloseCallback;
-typedef std::function<void (const TcpConnectionPtr&)> MessageCallback;
+// typedef std::function<void (const TcpConnectionPtr&)> ConnectionCallback;
+// typedef std::function<void (const TcpConnectionPtr&)> CloseCallback;
+// typedef std::function<void (const TcpConnectionPtr&)> MessageCallback;
 
 class TcpServer : noncopyable {
     public:
@@ -28,15 +28,8 @@ class TcpServer : noncopyable {
 
         // start the server
         void start();
-
-        // void setConnectionCallback(const ConnectionCallback& cb) { m_conn_callback = cb; }
-        // void setMessageCallback(const MessageCallback& cb) { m_message_callback = cb; }
-
-
         void setThreadNums(int nums);
         const std::string& getName() const { return m_name; }
-
-        
 
     private:
         void newConnection(int fd);

@@ -5,6 +5,7 @@
 #include <sys/timerfd.h>
 #include <strings.h>
 
+const int TimerHeap::defaultTimeDelay = 30;
 
 // read data from timer fd
 void readTimerFd(const int timer_fd) {
@@ -96,6 +97,7 @@ void TimerHeap::pop() {
     percolateDown(0);
 }
 
+
 const std::unique_ptr<Timer>& TimerHeap::top() const {
     return m_min_heap.front();
 }
@@ -105,6 +107,7 @@ void TimerHeap::handleRead() {
     // LOG_DEBUG << "assertInLoopThread() begin";
     m_ownerloop->assertInLoopThread();
     readTimerFd(m_timerfd);
+    // handle timeout tasks
     time_t now = ::time(NULL);
     while (!m_min_heap.empty()) {
         const std::unique_ptr<Timer>& timer = m_min_heap.front();

@@ -11,7 +11,7 @@
 // and the variables of thread do not interfere with each other.
 __thread EventLoop* t_loopInThisThread = 0;
 
-const int EventLoop::kPollTimeoutMs = 5000;
+const int EventLoop::kPollTimeoutMs = 30000;
 
 EventLoop::EventLoop() 
 :   m_looping(false),

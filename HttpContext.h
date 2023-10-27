@@ -37,13 +37,10 @@ class HttpContext {
         void handleHttpRequest();
         void getHttpResponse();
 
-        bool isLongConnection() const { return m_connection == KEEP_ALIVE; }
-
 
         void setStatusCode(HttpStatusCode code) { m_status_code = code; }
         void setStatusMessage(const std::string& msg) { m_status_message = msg; }
-        void setCloseConnection(bool close) { m_close_connection = close; }
-        bool isClosed() const { return m_close_connection; }
+        bool isKeepAlive() const { return m_connection == KEEP_ALIVE; }
 
         
         METHOD getMethod() const { return m_method; }
@@ -53,6 +50,7 @@ class HttpContext {
         CHECK_STATE getParseResult() const { return m_check_state; }
 
         void work();
+        void reset();
 
 
     private:
@@ -62,7 +60,6 @@ class HttpContext {
         void parseMessageBody();
 
 
-        bool m_close_connection;
         METHOD m_method;
         HTTP_VERSION m_version;
         CONNECTION m_connection;

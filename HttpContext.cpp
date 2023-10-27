@@ -78,8 +78,7 @@ char favicon[555] = {
 
 
 HttpContext::HttpContext(Buffer* input_buffer, Buffer* output_buffer)
-:   m_close_connection(true),
-    m_method(GET), 
+:   m_method(GET), 
     m_version(HTTP_1_0),
     m_connection(CLOSE),
     m_request_state(NO_REQUEST),
@@ -95,11 +94,20 @@ HttpContext::~HttpContext() { }
 void HttpContext::work() {
     // parse the requeset data in input buffer
     handleHttpRequest();
-    if (m_request_state == NO_REQUEST) {
-        // more http request data needed, EPOLLIN event is expected
-    }
     // get the response data and append it into output buffer
     getHttpResponse();
+}
+
+void HttpContext::reset() {
+    m_method = GET;
+    m_version = HTTP_1_0;
+    m_connection = KEEP_ALIVE;
+    m_request_state = NO_REQUEST;
+    m_check_state = CHECK_STATE_REQUEST_LINE;
+    m_uri.clear();
+    m_new_line.clear();
+    m_input_buffer->retrieveAll();
+    m_output_buffer->retrieveAll();
 }
 
 LINE_STATE HttpContext::parseLine() {
@@ -226,7 +234,6 @@ void HttpContext::parseMessageHeader() {
         if (strncasecmp(m_new_line.data() + start, "Keep-Alive", 10) == 0) {
             // long connection
             m_connection = KEEP_ALIVE;
-            m_close_connection = false;
         }
         else {
             m_request_state = BAD_REQUEST;
@@ -311,13 +318,6 @@ void HttpContext::getHttpResponse() {
     else if (m_request_state == INTERNAL_ERROR) {
         response += "500 Internal Server Error\r\n";
         response += "\r\n";
-    }
-    else if (m_request_state == CLOSED_CONNECTION) {
-        // todo
-        return;
-    }
-    else {
-        // more states
     }
 
     m_output_buffer->append(response.data(), response.size());
