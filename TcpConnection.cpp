@@ -129,9 +129,11 @@ void TcpConnection::handleClose() {
     LOG_DEBUG << "TcpConnection::handleClose()";
     // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
-    // if the connection is set to be a long connection
+    // if the connection is a long connection
     if (m_timeout == false && m_alive == false && m_context->isKeepAlive()) {
         m_alive = true;
+        // ready for new requests
+        m_channel->enableReading();
         return;
     }
     // if the connection is a long connection, close it when it is timeout

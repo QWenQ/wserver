@@ -32,6 +32,7 @@ Socket::Socket(int fd, bool closed)
     m_closed(closed)
 {
     setNonBlock(true);
+    setTcpNoDelay(true);
 }
 
 Socket::~Socket() {
