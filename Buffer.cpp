@@ -128,11 +128,10 @@ ssize_t Buffer::writeToFd(int fd) {
             }
         }
         else if (bytes == 0) {
-            // the peer client close the connection
-            all_bytes = 0;
             break;
         }
     }
+    // if all_bytes == 0, the peer client closed the connection
     return all_bytes;
 }
 

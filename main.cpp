@@ -6,7 +6,7 @@ int main(int argc, char* argv[]) {
     EventLoop loop;
     TcpServer server(&loop, "myserver", true);
     // default thread nums == 4
-    server.setThreadNums(1);
+    server.setThreadNums(2);
     // start threadpool and listen for new clients
     server.start();
     // main loop starts working to allocate new clients to threadpool

@@ -79,14 +79,21 @@ void TcpConnection::handleRead() {
     LOG_DEBUG << "read bytes " << bytes;
     if (bytes > 0) {
         handleHttpRequest();
-        // // if the connection is a long connection
-        // if (isKeepAlive()) {
-        //     // add a timer for the connection in its loop
-        //     m_loop->runAfter(TimerHeap::defaultTimeDelay, std::bind(&TcpConnection::handleClose, this));
+        // if get a keep-alive request
+        if (m_alive == false && m_context->isKeepAlive()) {
+            m_alive = true;
+            m_loop->runAfter(TimerHeap::defaultTimeDelay,
+                        std::bind(&TcpConnection::closeLongConnection, shared_from_this()));
+        }
+        // if the connection is long and not timeout
+        // if (m_alive && m_timeout == false) {
+        //     m_context->reset();
+        //     m_channel->enableReading();
         // }
         handleWrite();
     }
     else if (bytes == 0) {
+        // the peer closed the connection
         handleClose();
     }
     else if (bytes < 0) {
@@ -114,14 +121,18 @@ void TcpConnection::handleWrite() {
         LOG_ERROR << "the peer client closed the connection";
         handleError();
     }
-    else if (m_output_buffer.readableBytes() > 0) {
+    else if (bytes > 0 && m_output_buffer.readableBytes() > 0) {
         // if any byte of the response is left, update the socket fd with EPOLLOUT event in its epoll
         m_channel->enableWriting(); 
     }
-    else if (m_alive && m_timeout == false) {
+    else if (bytes > 0 && m_alive && m_timeout == false) {
         // long connection and not timeout
         m_context->reset();
         m_channel->enableReading();
+    }
+    else {
+        // other situations
+        handleClose();
     }
 }
 
@@ -129,15 +140,25 @@ void TcpConnection::handleClose() {
     LOG_DEBUG << "TcpConnection::handleClose()";
     // LOG_DEBUG << "assertInLoopThread() begin";
     m_loop->assertInLoopThread();
-    // if the connection is a long connection
-    if (m_timeout == false && m_alive == false && m_context->isKeepAlive()) {
-        m_alive = true;
-        // ready for new requests
-        m_channel->enableReading();
-        return;
-    }
-    // if the connection is a long connection, close it when it is timeout
+    
+    // if the connection is a long connection, close it after timeout
     if (m_alive && m_timeout == false) return;
+    // if (m_timeout == false && m_alive == false && m_context->isKeepAlive()) {
+    //     m_alive = true;
+    //     // set a timer for the connection
+    //     m_loop->runAfter(TimerHeap::defaultTimeDelay, 
+    //                     std::bind(&TcpConnection::closeLongConnection, shared_from_this()));
+    //     // ready for new requests
+    //     m_context->reset();
+    //     m_channel->enableReading();
+    //     return;
+    // }
+    // // if the connection is a long connection, close it when it is timeout
+    // if (m_alive && m_timeout == false) {
+    //     m_context->reset();
+    //     m_channel->enableReading();
+    //     return;
+    // }
     LOG_DEBUG << "TcpConnection::handleClose() is called by loop " << m_loop;
     if (m_state != kConnected && m_state != kDisconnecting) {
         LOG_FATAL << "TcpConnection::handleClose(): state should be kConnected instead of " << stateToString();

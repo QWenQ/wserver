@@ -107,7 +107,7 @@ void HttpContext::reset() {
     m_uri.clear();
     m_new_line.clear();
     m_input_buffer->retrieveAll();
-    m_output_buffer->retrieveAll();
+    // m_output_buffer->retrieveAll();
 }
 
 LINE_STATE HttpContext::parseLine() {
