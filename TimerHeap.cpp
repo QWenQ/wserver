@@ -5,8 +5,8 @@
 #include <sys/timerfd.h>
 #include <strings.h>
 
-// a long connection will be alive for 30 seconds
-const int TimerHeap::defaultTimeDelay = 30;
+// a long connection will be alive(seconds)
+const int TimerHeap::defaultTimeDelay = 300;
 
 // read data from timer fd
 void readTimerFd(const int timer_fd) {

@@ -168,9 +168,10 @@ void TcpConnection::handleClose() {
     // unregister fd from epoll
     m_channel->disableAll();
     // close a long connection which is timeout immediately
-    if (m_alive && m_timeout) {
-        m_socket_ptr->shutdown();
-    }
+    // if (m_alive && m_timeout) {
+    //     m_socket_ptr->shutdown();
+    // }
+    m_socket_ptr->shutdown();
     // erase this connection from server's connection map
     TcpConnectionPtr guard_this(shared_from_this());
     // call TcpServer::removeConnection()
