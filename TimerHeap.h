@@ -27,6 +27,7 @@ class TimerHeap {
         void percolateUp(int index);
 
         void addTimerInLoop(CallBack cb, time_t delay);
+        void handleTimeoutEvents();
 
 
         EventLoop* m_ownerloop;

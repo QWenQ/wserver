@@ -5,15 +5,23 @@
 #include <sys/timerfd.h>
 #include <strings.h>
 
+// a long connection will be alive for 30 seconds
 const int TimerHeap::defaultTimeDelay = 30;
 
 // read data from timer fd
 void readTimerFd(const int timer_fd) {
     uint64_t one = 1;
-    ssize_t ret = ::read(timer_fd, &one, sizeof(one));
-    if (ret != sizeof(one)) {
-        LOG_ERROR << "TimerHeap::handleRead() reads " << ret << "bytes instead of 8";
+    while (true) {
+        ssize_t ret = ::read(timer_fd, &one, sizeof(one));
+        if (ret == -1) break;
+        if (ret != sizeof(one)) {
+            LOG_ERROR << "TimerHeap::handleRead() reads " << ret << "bytes instead of 8";
+        }
     }
+    // ssize_t ret = ::read(timer_fd, &one, sizeof(one));
+    // if (ret != sizeof(one)) {
+    //     LOG_ERROR << "TimerHeap::handleRead() reads " << ret << "bytes instead of 8";
+    // }
 }
 
 void setTimer(const int timer_fd, const time_t delay) {
@@ -103,11 +111,7 @@ const std::unique_ptr<Timer>& TimerHeap::top() const {
 }
 
 
-void TimerHeap::handleRead() {
-    // LOG_DEBUG << "assertInLoopThread() begin";
-    m_ownerloop->assertInLoopThread();
-    readTimerFd(m_timerfd);
-    // handle timeout tasks
+void TimerHeap::handleTimeoutEvents() {
     time_t now = ::time(NULL);
     while (!m_min_heap.empty()) {
         const std::unique_ptr<Timer>& timer = m_min_heap.front();
@@ -117,4 +121,23 @@ void TimerHeap::handleRead() {
         timer->handleTimeoutEvent();
         pop();
     }
+}
+
+void TimerHeap::handleRead() {
+    // LOG_DEBUG << "assertInLoopThread() begin";
+    m_ownerloop->assertInLoopThread();
+    readTimerFd(m_timerfd);
+    // handle timeout tasks
+    // queueInLoop() instead of runInLoop() for all request data 
+    // of timeout connectio should be handled before closing the timeout connection
+    m_ownerloop->queueInLoop(std::bind(&TimerHeap::handleTimeoutEvents, this));
+    // time_t now = ::time(NULL);
+    // while (!m_min_heap.empty()) {
+    //     const std::unique_ptr<Timer>& timer = m_min_heap.front();
+    //     if (timer->getExpireTime() > now) {
+    //         break;
+    //     }
+    //     timer->handleTimeoutEvent();
+    //     pop();
+    // }
 }

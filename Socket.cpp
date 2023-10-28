@@ -98,8 +98,13 @@ void Socket::shutdownWrite() {
     // shutdown() will close the socket immediately in the spcified way 
     // instead of decreasing the reference count of the socket like close()
     if (::shutdown(m_sockfd, SHUT_WR) < 0) {
-        perror("::shutdown() failed!");
         LOG_ERROR << "Socket::shutdownWrite failed!";
+    }
+}
+
+void Socket::shutdown() {
+    if (::shutdown(m_sockfd, SHUT_RDWR) < 0) {
+        LOG_ERROR << "shutdown write and read failed";
     }
 }
 

@@ -168,8 +168,15 @@ void EventLoop::wakeup() {
 
 void EventLoop::handleRead() {
     uint64_t one = 1;
-    ssize_t n = ::read(m_wakeup_fd, &one, sizeof(one));
-    if (n != sizeof(one)) {
-        LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of " << sizeof(one);
+    while (true) {
+        ssize_t n = ::read(m_wakeup_fd, &one, sizeof(one));
+        if (n == -1) break;
+        if (n != sizeof(one)) {
+            LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of " << sizeof(one);
+        }
     }
+    // ssize_t n = ::read(m_wakeup_fd, &one, sizeof(one));
+    // if (n != sizeof(one)) {
+    //     LOG_ERROR << "EventLoop::handleRead() reads " << n << " bytes instead of " << sizeof(one);
+    // }
 }

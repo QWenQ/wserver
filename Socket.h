@@ -17,6 +17,7 @@ class Socket {
 
         int getFd() const { return m_sockfd; }
         void shutdownWrite();
+        void shutdown();
         // no Nagle algorithm
         void setTcpNoDelay(bool on);
         // enable sending of keep-alive messages on connection-oriented sockets periodically.

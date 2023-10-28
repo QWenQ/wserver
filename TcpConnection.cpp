@@ -161,11 +161,16 @@ void TcpConnection::handleClose() {
     // }
     LOG_DEBUG << "TcpConnection::handleClose() is called by loop " << m_loop;
     if (m_state != kConnected && m_state != kDisconnecting) {
-        LOG_FATAL << "TcpConnection::handleClose(): state should be kConnected instead of " << stateToString();
+        // LOG_FATAL << "TcpConnection::handleClose(): state should be kConnected instead of " << stateToString();
+        LOG_FATAL << "TcpConnection [" << m_name << "]: should be kConnected or kDisconnecting instead of " << stateToString();
     }
     setState(kDisconnected);
     // unregister fd from epoll
     m_channel->disableAll();
+    // close a long connection which is timeout immediately
+    if (m_alive && m_timeout) {
+        m_socket_ptr->shutdown();
+    }
     // erase this connection from server's connection map
     TcpConnectionPtr guard_this(shared_from_this());
     // call TcpServer::removeConnection()
