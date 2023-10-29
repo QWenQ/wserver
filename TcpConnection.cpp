@@ -171,7 +171,9 @@ void TcpConnection::handleClose() {
     // if (m_alive && m_timeout) {
     //     m_socket_ptr->shutdown();
     // }
-    m_socket_ptr->shutdown();
+    if (m_alive == false) {
+        m_socket_ptr->shutdownWrite();
+    }
     // erase this connection from server's connection map
     TcpConnectionPtr guard_this(shared_from_this());
     // call TcpServer::removeConnection()

@@ -52,6 +52,11 @@ void Acceptor::handleRead() {
     while (true) {
         int connfd = m_socket.accept();
         if (connfd < 0) break;
+        // limitation of connection numbers
+        if (connfd > MAXFD) {
+            ::close(connfd);
+            return;
+        }
         LOG_DEBUG << "get new conn" << connfd;
         if (m_new_conn_callback) {
             m_new_conn_callback(connfd);

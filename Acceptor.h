@@ -12,6 +12,7 @@
 class Acceptor {
     public:
         typedef std::function<void(int sockfd)> NewConnectionCallback;
+        static const int MAXFD = 100000;
 
         Acceptor(EventLoop* loop, bool reuse_port);
         ~Acceptor();
